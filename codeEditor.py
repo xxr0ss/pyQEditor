@@ -30,12 +30,15 @@ class LineNumberArea(QWidget):
 
 
 class CodeEditor(QPlainTextEdit):
-    def __init__(self):
+    __title__ = 'Editor'
+
+    def __init__(self, parent: QWidget):
         QPlainTextEdit.__init__(self)
+        self.parent = parent
         self.line_number_area = LineNumberArea(self)
 
         self.blockCountChanged[int].connect(self.update_line_number_area_width)
-        self.updateRequest[QRect, int].connect(self.udpate_line_number_area)
+        self.updateRequest[QRect, int].connect(self.update_line_number_area)
         self.cursorPositionChanged.connect(self.highlight_current_line)
 
     def line_number_area_width(self):
@@ -44,20 +47,71 @@ class CodeEditor(QPlainTextEdit):
         space = 3 + self.fontMetrics().horizontalAdvance('9') * digits
         return space
 
+    # override
+    def sizeHint(self) -> QSize:
+        return self.parent.size()
+
+    # override
+    # make line number area resize when QPlainTextEdit resizing
     def resizeEvent(self, event: QResizeEvent) -> None:
-        pass
+        super().resizeEvent(event)
+        cr = self.contentsRect()
+        width = self.line_number_area_width()
+        rect = QRect(cr.left(), cr.top(), width, cr.height())
+        self.line_number_area.setGeometry(rect)
 
     def lineNumberAreaPaintEvent(self, event: QPaintEvent):
-        pass
+        painter = QPainter(self.line_number_area)
+        painter.fillRect(event.rect(), Qt.lightGray)
+        block = self.firstVisibleBlock()
+        block_number = block.blockNumber()
+        offset = self.contentOffset()
+        top = self.blockBoundingGeometry(block).translated(offset).top()
+        bottom = top + self.blockBoundingRect(block).height()
 
-    @Slot
+        while block.isValid() and top <= event.rect().bottom():
+            if block.isVisible() and bottom >= event.rect().top():
+                number = str(block_number + 1)
+                painter.setPen(Qt.black)
+                width = self.line_number_area.width()
+                height = self.fontMetrics().height()
+                painter.drawText(0, top, width, height, Qt.AlignRight, number)
+
+            block = block.next()
+            top = bottom
+            bottom = top + self.blockBoundingRect(block).height()
+            block_number += 1
+
+    @Slot()
     def update_line_number_area_width(self, newBlockCount):
-        pass
+        self.setViewportMargins(self.line_number_area_width(), 0, 0, 0)
 
-    @Slot
+    @Slot()
     def update_line_number_area(self, rect: QRect, dy: int):
-        pass
+        if dy:
+            self.line_number_area.scroll(0, dy)
+        else:
+            width = self.line_number_area.width()
+            self.line_number_area.update(0, rect.y(), width, rect.height())
 
-    @Slot
+        if rect.contains(self.viewport().rect()):
+            self.update_line_number_area_width(0)
+
+    @Slot()
     def highlight_current_line(self):
-        pass
+        extra_selections = []
+
+        if not self.isReadOnly():
+            selection = QTextEdit.ExtraSelection()
+
+            line_color = QColor(Qt.yellow).lighter(160)
+            selection.format.setBackground(line_color)
+
+            selection.format.setProperty(QTextFormat.FullWidthSelection, True)
+
+            selection.cursor = self.textCursor()
+            selection.cursor.clearSelection()
+
+            extra_selections.append(selection)
+
+        self.setExtraSelections(extra_selections)
