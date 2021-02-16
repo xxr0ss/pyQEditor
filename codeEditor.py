@@ -1,8 +1,6 @@
 from PySide6.QtWidgets import QWidget
 from PySide6.QtCore import QSize, Slot
 
-from editingArea import EditingArea
-from editorStatusBar import EditorStatusBar
 from ui.ui_codeeditor import Ui_CodeEditor
 
 

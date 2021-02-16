@@ -37,9 +37,15 @@ class EditingArea(QPlainTextEdit):
         self.window = window
         self.line_number_area = LineNumberArea(self)
 
+        self.setupStyle()
+
         self.blockCountChanged[int].connect(self.update_line_number_area_width)
         self.updateRequest[QRect, int].connect(self.update_line_number_area)
         self.cursorPositionChanged.connect(self.highlight_current_line)
+    
+    def setupStyle(self):
+        with open('ui/stylesheet.css', 'r') as f:
+            self.setStyleSheet(f.read())
 
     def line_number_area_width(self):
         max_num = max(1, self.blockCount())
