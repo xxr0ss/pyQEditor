@@ -1,6 +1,6 @@
 from PySide6.QtCore import Qt  # for enum flags
 from PySide6.QtWidgets import QMainWindow, QWidget, QDockWidget
-from codeeditor import CodeEditor
+from codeEditor import CodeEditor
 
 from ui.ui_main import Ui_mainWindow
 

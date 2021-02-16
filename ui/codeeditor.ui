@@ -23,11 +23,17 @@
     </rect>
    </property>
    <layout class="QVBoxLayout" name="editorVLayout">
+    <property name="spacing">
+     <number>0</number>
+    </property>
+    <property name="sizeConstraint">
+     <enum>QLayout::SetMaximumSize</enum>
+    </property>
     <item>
-     <widget class="EditingArea" name="plainTextEdit"/>
+     <widget class="EditingArea" name="codeEditingArea"/>
     </item>
     <item>
-     <widget class="QWidget" name="widget_2" native="true"/>
+     <widget class="EditorStatusBar" name="statusBar" native="true"/>
     </item>
    </layout>
   </widget>
@@ -37,6 +43,12 @@
    <class>EditingArea</class>
    <extends>QPlainTextEdit</extends>
    <header>editingArea</header>
+  </customwidget>
+  <customwidget>
+   <class>EditorStatusBar</class>
+   <extends>QWidget</extends>
+   <header>editorStatusBar</header>
+   <container>1</container>
   </customwidget>
  </customwidgets>
  <resources/>

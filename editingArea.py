@@ -32,7 +32,7 @@ class LineNumberArea(QWidget):
 class EditingArea(QPlainTextEdit):
     __title__ = 'Editor'
 
-    def __init__(self, window: QWidget):
+    def __init__(self, window):
         QPlainTextEdit.__init__(self)
         self.window = window
         self.line_number_area = LineNumberArea(self)
