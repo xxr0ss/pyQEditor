@@ -1,9 +1,9 @@
-import os, sys
+import os, shutil
 import re
 
 
 def removeAllUicFiles():
-    files_dir = os.path.join(os.getcwd(), 'ui')
+    files_dir = os.sep.join((os.getcwd(), 'src', 'ui'))
     files = os.listdir(files_dir)
     to_remove = []
     pat = re.compile(r'^ui_.*\.py')
@@ -28,5 +28,14 @@ def removeAllUicFiles():
         print('remove canceled')
 
 
-if __name__ == '__main__':
-    removeAllUicFiles()
+def removeAllPycFiles():
+    searchPath = [
+        os.getcwd(),
+        os.sep.join((os.getcwd(), 'devtools')),
+        os.sep.join((os.getcwd(), 'src', 'ui'))
+    ]
+
+    for dir in searchPath:
+        if '__pycache__' in os.listdir(dir):
+            # print(dir)
+            shutil.rmtree(os.sep.join((dir, '__pycache__')))

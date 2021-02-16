@@ -11,7 +11,7 @@ def _filepathFix(filepath):
 
 def compileAll():
     # TODO 考虑把搜索路径移出去作为命令行解析的一部分
-    searchpath = os.path.join(os.getcwd(), 'ui')
+    searchpath = os.sep.join((os.getcwd(), 'src', 'ui'))
     files = os.listdir(searchpath)
     to_compile = []
     pat = re.compile(r'.*\.ui')
