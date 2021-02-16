@@ -2,7 +2,6 @@ import os, sys
 import re
 
 
-
 def removeAllUicFiles():
     files_dir = os.path.join(os.getcwd(), 'ui')
     files = os.listdir(files_dir)
