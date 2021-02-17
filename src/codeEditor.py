@@ -7,7 +7,7 @@ from ui.ui_codeeditor import Ui_CodeEditor
 class CodeEditor(QWidget):
     __title__ = 'Code Editor'
 
-    def __init__(self, parent):
+    def __init__(self, parent, content=None):
         super(CodeEditor, self).__init__()
         self.parent = parent
         self.ui = Ui_CodeEditor()
@@ -16,6 +16,9 @@ class CodeEditor(QWidget):
         self.editingArea = self.ui.codeEditingArea
         self.statusBar = self.ui.statusBar
         self.editingArea.cursorPositionChanged.connect(self.update_statusbar_cursor_pos)
+
+        if content is not None:
+            self.editingArea.setPlainText(content)
 
     def sizeHint(self) -> QSize:
         return self.parent.size()
