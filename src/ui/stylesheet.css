@@ -1,3 +1,4 @@
 QPlainTextEdit{
-    font-family: "consolas"
+    font-family: "consolas";
+    selection-background-color: #a4a1ac;
 }
