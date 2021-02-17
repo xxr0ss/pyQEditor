@@ -1,0 +1,9 @@
+QPlainTextEdit{
+    font-family: "consolas";
+    selection-background-color: #a4a1ac;
+    border: 0;
+}
+
+QDockWidget{
+    margin: 0
+}
