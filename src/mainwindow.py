@@ -1,6 +1,7 @@
 from PySide6.QtCore import Qt, Signal, Slot, QCoreApplication, qDebug  # for enum flags
 from PySide6.QtWidgets import QMainWindow, QFileDialog, QDockWidget, QMessageBox, QTabWidget
 from codeEditor import CodeEditor
+from welcomePage import WelcomePage
 import os
 
 from ui.ui_mainwindow import Ui_mainWindow
@@ -46,7 +47,11 @@ class MainWindow(QMainWindow):
 
     def add_welcome_page(self):
         # TODO: add welcome page (like vscode)
-        pass
+        page = WelcomePage(self)
+        new_dock = QDockWidget('Welcome', self)
+        new_dock.setWidget(page)
+        self.addDockWidget(Qt.TopDockWidgetArea, new_dock)
+        self.dock_pages.append(new_dock)
 
     def check_cmd_args(self):
         argv = QCoreApplication.arguments()
