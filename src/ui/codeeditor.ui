@@ -29,6 +29,9 @@
     <property name="sizeConstraint">
      <enum>QLayout::SetMaximumSize</enum>
     </property>
+    <property name="topMargin">
+     <number>0</number>
+    </property>
     <item>
      <widget class="EditingArea" name="codeEditingArea">
       <property name="lineWidth">

@@ -44,6 +44,11 @@
         <height>10</height>
        </size>
       </property>
+      <property name="font">
+       <font>
+        <pointsize>8</pointsize>
+       </font>
+      </property>
       <property name="text">
        <string>1:1</string>
       </property>
