@@ -2,17 +2,12 @@ import os
 from PySide6.QtWidgets import QWidget
 from PySide6.QtCore import QSize, Slot
 
-from ui.ui_codeeditor import Ui_CodeEditor
+from ..ui.ui_codeeditor import Ui_CodeEditor
 
 
-class CodeEditor(QWidget):
-    __title__ = 'Code Editor'
-    untitled = 'untitled'
-
-    # TODO: 使得必要的变量为私有，限制访问，比如self.filename
-
-    def __init__(self, parent, filename=None):
-        super(CodeEditor, self).__init__()
+class CodeEditorWidget(QWidget):
+    def __init__(self, parent, filepath=None):
+        super(CodeEditorWidget, self).__init__()
         self.parent = parent
         self.ui = Ui_CodeEditor()
         self.ui.setupUi(self)
@@ -21,36 +16,42 @@ class CodeEditor(QWidget):
         self.statusBar = self.ui.statusBar
         self.editingArea.cursorPositionChanged.connect(self.update_statusbar_cursor_pos)
 
-        self.filepath = filename
-        if filename is not None:
+        self._filepath = filepath
+        if filepath is not None:
             self.load_file()
         else:
             self.new_file()
 
     def load_file(self):
         # if it's None, self.new_file rather than self.load_file should be called
-        assert self.filepath is not None
+        assert self._filepath is not None
         # file's existence should be checked before calling this method
-        assert os.path.exists(self.filepath)
+        assert os.path.exists(self._filepath)
 
-        with open(self.filepath, 'r') as f:
+        with open(self._filepath, 'r') as f:
             content = f.read()
             self.editingArea.setPlainText(content)
-        if '/' in self.filepath:
-            self.__title__ = self.filepath.split('/')[-1]
-        elif '\\' in self.filepath:
-            self.__title__ = self.filepath.split('\\')[-1]
-        else:
-            self.__title__ = self.filepath
 
-        self.setWindowTitle(self.filepath)
+        # always make file path '/'-style in CodeEditor
+        # because both Windows and Linux are happy to use it
+        if '\\' in self._filepath:
+            self._filepath = self._filepath.replace('\\', '/')
+
+        self.setWindowTitle(self.get_file_base_name())
 
     def new_file(self):
-        self.__title__ = self.untitled
         self.setWindowTitle('new file')
 
     def sizeHint(self) -> QSize:
         return self.parent.size()
+
+    @property
+    def filepath(self):
+        return self._filepath
+
+    @filepath.setter
+    def filepath(self, value):
+        self._filepath = value
 
     def get_content(self) -> bytes:
         content = self.editingArea.toPlainText()
@@ -58,6 +59,18 @@ class CodeEditor(QWidget):
         if isinstance(content, str):
             content = content.encode()
         return content
+
+    # get file base name, for example 'D:/a/b/c.txt' will return 'c.txt'.
+    # useful when being used as window title
+    def get_file_base_name(self) -> str:
+        if self._filepath is None:
+            return 'New File'
+        return self._filepath.split('/')[-1]
+
+    # check if code editor is using a new file that haven't been saved
+    # (so its filepath is None)
+    def is_new_file(self) -> bool:
+        return self._filepath is None
 
     @Slot()
     def update_statusbar_cursor_pos(self):

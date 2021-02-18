@@ -4,7 +4,7 @@
 # Contact: http://www.qt.io/licensing/
 #
 
-
+import os
 from PySide6.QtCore import Slot, Qt, QRect, QSize
 from PySide6.QtGui import QColor, QPainter, QTextFormat, QPaintEvent, QResizeEvent
 from PySide6.QtWidgets import QPlainTextEdit, QWidget, QTextEdit
@@ -44,7 +44,7 @@ class EditingArea(QPlainTextEdit):
         self.cursorPositionChanged.connect(self.highlight_current_line)
     
     def setupStyle(self):
-        with open('ui/stylesheet.css', 'r') as f:
+        with open(os.sep.join((os.getcwd(), 'QEditor/ui/stylesheet.css')), 'r') as f:
             self.setStyleSheet(f.read())
 
     def line_number_area_width(self):

@@ -3,7 +3,7 @@ import re
 
 
 def removeAllUicFiles():
-    files_dir = os.sep.join((os.getcwd(), 'src', 'ui'))
+    files_dir = os.sep.join((os.getcwd(), 'src', 'QEditor', 'ui'))
     files = os.listdir(files_dir)
     to_remove = []
     pat = re.compile(r'^ui_.*\.py')
@@ -32,7 +32,7 @@ def removeAllPycFiles():
     searchPath = [
         os.getcwd(),
         os.sep.join((os.getcwd(), 'devtools')),
-        os.sep.join((os.getcwd(), 'src', 'ui'))
+        os.sep.join((os.getcwd(), 'src', 'QEditor' 'ui'))
     ]
 
     for dir in searchPath:
