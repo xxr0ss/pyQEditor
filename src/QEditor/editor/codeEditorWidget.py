@@ -1,12 +1,14 @@
 import os
 from PySide6.QtWidgets import QWidget
-from PySide6.QtCore import QSize, Slot
+from PySide6.QtCore import QSize, Slot, Signal
 
 from ..ui.ui_codeeditor import Ui_CodeEditor
 
 
 class CodeEditorWidget(QWidget):
-    def __init__(self, parent, filepath=None):
+    content_status_changed = Signal(bool)    # self.need_saving
+
+    def __init__(self, parent=None, filepath=None):
         super(CodeEditorWidget, self).__init__()
         self.parent = parent
         self.ui = Ui_CodeEditor()
@@ -15,6 +17,10 @@ class CodeEditorWidget(QWidget):
         self.editingArea = self.ui.codeEditingArea
         self.statusBar = self.ui.statusBar
         self.editingArea.cursorPositionChanged.connect(self.update_statusbar_cursor_pos)
+
+        self.need_saving = False
+        self.editingArea.textChanged.connect(lambda: self.content_status_changed.emit(True))
+        self.content_status_changed.connect(self.on_content_status_change)
 
         self._filepath = filepath
         if filepath is not None:
@@ -77,3 +83,11 @@ class CodeEditorWidget(QWidget):
         cursor = self.editingArea.textCursor()
         row, col = cursor.blockNumber() + 1, cursor.columnNumber() + 1
         self.statusBar.updateCursorPos((row, col))
+
+    @Slot()
+    def on_content_status_change(self, need_saving: bool):
+        self.need_saving = need_saving
+
+    @Slot()
+    def file_saved(self):
+        self.content_status_changed.emit(False)
