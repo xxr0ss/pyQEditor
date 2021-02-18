@@ -14,5 +14,6 @@ class EditorStatusBar(QWidget):
         return QSize(self.parent.size().width(), 20)
 
     def updateCursorPos(self, pos: (int, int)):
+        # TODO: hande Tab properly
         text = f'{pos[0]}:{pos[1]}'
         self.ui.cursorPos.setText(text)

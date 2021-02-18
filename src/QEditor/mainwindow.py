@@ -74,7 +74,6 @@ class MainWindow(QMainWindow):
         tabs.setTabText(tabs.currentIndex(), editor.get_file_base_name())
 
     def add_welcome_page(self):
-        # FIXME 启动的时候不显示
         page = WelcomePage(self)
         page.resize(self.size())
         self.tabs_manager.add_editor_tab(page, 'Welcome')

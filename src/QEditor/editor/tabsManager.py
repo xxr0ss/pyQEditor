@@ -14,6 +14,7 @@ class TabsManager(QObject):
         self._tabs.setTabPosition(QTabWidget.North)
         self._tabs.setTabsClosable(True)  # so that there will be a 'X' on tab for closing
         self._tabs.tabCloseRequested.connect(self.remove_editor_tab)
+        self._tabs.setMovable(True) # make tabs movable (their order can be changed)
 
     @property
     def tabs(self):
@@ -27,7 +28,8 @@ class TabsManager(QObject):
         if isinstance(widget, CodeEditorWidget):
             # mark tab as modified when content of editor changed
             widget.content_status_changed.connect(lambda need_saving: self.update_tab_status(widget, need_saving))
-            self._tabs.addTab(widget, title)
+            idx = self._tabs.addTab(widget, title)
+            self._tabs.setCurrentIndex(idx)
         elif isinstance(widget, WelcomePage):
             self._tabs.addTab(widget, title)
 

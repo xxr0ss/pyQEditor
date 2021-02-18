@@ -4,7 +4,7 @@ A Code Editor based on PySide6
 
 ## Build
 ### Requirements
-* Python3.8 +
+* Python3.9+
 * PySide6
 
 ### Steps
