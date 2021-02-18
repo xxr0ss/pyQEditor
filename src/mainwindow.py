@@ -1,5 +1,5 @@
 from PySide6.QtCore import Qt, Signal, Slot, QCoreApplication, qDebug, QObject  # for enum flags
-from PySide6.QtWidgets import QMainWindow, QFileDialog, QDockWidget, QMessageBox, QTabWidget
+from PySide6.QtWidgets import QMainWindow, QFileDialog, QDockWidget, QMessageBox, QTabWidget, QWidget
 from codeEditor import CodeEditor
 from welcomePage import WelcomePage
 import os
@@ -16,44 +16,40 @@ class MainWindow(QMainWindow):
         self.ui = Ui_mainWindow()
         self.ui.setupUi(self)
 
-        # store editor dock widget instances
-        self.dock_pages: list[QDockWidget] = []
+        self.editor_tabs_dock = QDockWidget('', self)
+        self.editor_tabs = QTabWidget(self)
+        self.editor_tabs_dock.setWidget(self.editor_tabs)
+        self.editor_tabs_dock.resize(self.size())
+        self.editor_tabs.setTabPosition(QTabWidget.North)
+        self.addDockWidget(Qt.TopDockWidgetArea, self.editor_tabs_dock)
 
-        self.externalFile.connect(self.add_new_dock_editor)
-        # TODO remove dock widget at its closeEvent or something
-        self.current_dock_editor: QDockWidget = None
-
-        # set dock tabs position north
-        self.setTabPosition(Qt.TopDockWidgetArea, QTabWidget.North)
-
+        self.externalFile.connect(
+            lambda filepath: self.add_editor_tab(t := CodeEditor(self.editor_tabs_dock, filepath=filepath), t.get_file_base_name()))
         self.check_cmd_args()
 
     @Slot()
     def on_actionNew_triggered(self):
-        self.add_new_dock_editor(None)
+        new_editor = CodeEditor(self.editor_tabs_dock, filepath=None)
+        self.add_editor_tab(new_editor, new_editor.get_file_base_name())
 
     @Slot()
     def on_actionOpen_triggered(self):
         filename = QFileDialog.getOpenFileName(self, 'Open File')
         if filename[0] != '':
             # check if already opened
-            for dock in self.dock_pages:
-                widget = dock.widget()
-                if not isinstance(widget, CodeEditor):
-                    continue
-                if widget.filepath == filename[0]:
-                    # same file opened
-                    return
+            for i in range(self.editor_tabs.count()):
+                page = self.editor_tabs.widget(i)
+                if isinstance(page, CodeEditor):
+                    if page.filepath == filename[0]:
+                        return
 
-            self.add_new_dock_editor(filename[0])
-    
+            self.add_editor_tab(ce := CodeEditor(self.editor_tabs_dock, filename[0]), ce.get_file_base_name())
+
     @Slot()
     def on_actionSave_triggered(self):
-        if self.current_dock_editor is None:
-            print('[x] current editor is none')
+        editor = self.editor_tabs.currentWidget()
+        if not isinstance(editor, CodeEditor):
             return
-
-        editor: CodeEditor = self.current_dock_editor.widget()
 
         if editor.is_new_file():
             # new file to save
@@ -67,37 +63,15 @@ class MainWindow(QMainWindow):
         with open(filepath, 'wb') as f:
             f.write(editor.get_content())
         editor.filepath = filepath
-        self.current_dock_editor.setWindowTitle(editor.get_file_base_name())
+        self.editor_tabs.setTabText(self.editor_tabs.currentIndex(), editor.get_file_base_name())
 
-    # @Slot(bool)
-    def update_dock_status(self, visible: bool):
-        sender: QDockWidget = self.sender()
-        if visible:
-            self.current_dock_editor: CodeEditor = sender.widget()
-            print(self.current_dock_editor.get_file_base_name())
-
-    def add_new_dock_editor(self, filepath):
-        editor = CodeEditor(self, filepath)
-        new_dock_editor = QDockWidget(editor.get_file_base_name(), self)
-        new_dock_editor.setWidget(editor)
-        self.addDockWidget(Qt.TopDockWidgetArea, new_dock_editor)
-        if len(self.dock_pages) != 0:
-            self.tabifyDockWidget(self.dock_pages[-1], new_dock_editor)
-        self.dock_pages.append(new_dock_editor)
-
-        new_dock_editor.visibilityChanged[bool].connect(self.update_dock_status)
-
-        new_dock_editor.show()
-        new_dock_editor.raise_()
-        self.current_dock_editor = new_dock_editor
+    def add_editor_tab(self, widget: QWidget, title: str):
+        self.editor_tabs.addTab(widget, title)
 
     def add_welcome_page(self):
         # TODO: add welcome page (like vscode)
         page = WelcomePage(self)
-        new_dock = QDockWidget('Welcome', self)
-        new_dock.setWidget(page)
-        self.addDockWidget(Qt.TopDockWidgetArea, new_dock)
-        self.dock_pages.append(new_dock)
+        self.add_editor_tab(page, 'Welcome')
 
     def check_cmd_args(self):
         argv = QCoreApplication.arguments()
