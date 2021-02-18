@@ -55,7 +55,7 @@ class MainWindow(QMainWindow):
 
         editor: CodeEditor = self.current_dock_editor.widget()
 
-        if editor.__title__ == CodeEditor.untitled:
+        if editor.is_new_file():
             # new file to save
             name = QFileDialog.getSaveFileName(self, 'Save File')
             if name[0] == '':
@@ -67,18 +67,18 @@ class MainWindow(QMainWindow):
         with open(filepath, 'wb') as f:
             f.write(editor.get_content())
         editor.filepath = filepath
-        # TODO update editor title
+        self.current_dock_editor.setWindowTitle(editor.get_file_base_name())
 
     # @Slot(bool)
     def update_dock_status(self, visible: bool):
         sender: QDockWidget = self.sender()
         if visible:
             self.current_dock_editor: CodeEditor = sender.widget()
-            print(self.current_dock_editor.__title__)
+            print(self.current_dock_editor.get_file_base_name())
 
     def add_new_dock_editor(self, filepath):
         editor = CodeEditor(self, filepath)
-        new_dock_editor = QDockWidget(editor.__title__, self)
+        new_dock_editor = QDockWidget(editor.get_file_base_name(), self)
         new_dock_editor.setWidget(editor)
         self.addDockWidget(Qt.TopDockWidgetArea, new_dock_editor)
         if len(self.dock_pages) != 0:
