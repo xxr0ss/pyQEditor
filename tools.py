@@ -17,7 +17,7 @@ def uic(args):
     if args.all:
         compileUI.compileAll()
     elif args.uifilename is not None:
-        files_dir = os.path.join(os.getcwd(), 'ui') 
+        files_dir = os.sep.join((os.getcwd(), 'QEditor','ui'))
         for f in args.uifilename:
             if not f.endswith('.ui'):
                 f += '.ui'

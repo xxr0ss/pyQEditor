@@ -52,12 +52,12 @@
   <customwidget>
    <class>EditingArea</class>
    <extends>QPlainTextEdit</extends>
-   <header>editingArea</header>
+   <header>..editor.editingArea</header>
   </customwidget>
   <customwidget>
    <class>EditorStatusBar</class>
    <extends>QWidget</extends>
-   <header>editorStatusBar</header>
+   <header>..editor.editorStatusBar</header>
    <container>1</container>
   </customwidget>
  </customwidgets>

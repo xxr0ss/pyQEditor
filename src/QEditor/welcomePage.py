@@ -1,6 +1,6 @@
 from PySide6.QtWidgets import QWidget
 from PySide6.QtCore import QSize
-from ui.ui_welcomepage import Ui_welcomePage
+from .ui.ui_welcomepage import Ui_welcomePage
 
 
 class WelcomePage(QWidget):

@@ -1,10 +1,10 @@
-from PySide6.QtCore import Qt, Signal, Slot, QCoreApplication, qDebug, QObject  # for enum flags
+from PySide6.QtCore import Qt, Signal, Slot, QCoreApplication, qDebug  # for enum flags
 from PySide6.QtWidgets import QMainWindow, QFileDialog, QDockWidget, QMessageBox, QTabWidget, QWidget
-from codeEditorWidget import CodeEditorWidget
-from welcomePage import WelcomePage
+from .editor.codeEditorWidget import CodeEditorWidget
+from .welcomePage import WelcomePage
 import os
 
-from ui.ui_mainwindow import Ui_mainWindow
+from .ui.ui_mainwindow import Ui_mainWindow
 
 
 class MainWindow(QMainWindow):

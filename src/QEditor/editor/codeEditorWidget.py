@@ -2,7 +2,7 @@ import os
 from PySide6.QtWidgets import QWidget
 from PySide6.QtCore import QSize, Slot
 
-from ui.ui_codeeditor import Ui_CodeEditor
+from ..ui.ui_codeeditor import Ui_CodeEditor
 
 
 class CodeEditorWidget(QWidget):
