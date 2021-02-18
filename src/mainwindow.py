@@ -1,6 +1,6 @@
 from PySide6.QtCore import Qt, Signal, Slot, QCoreApplication, qDebug, QObject  # for enum flags
 from PySide6.QtWidgets import QMainWindow, QFileDialog, QDockWidget, QMessageBox, QTabWidget, QWidget
-from codeEditor import CodeEditor
+from codeEditorWidget import CodeEditorWidget
 from welcomePage import WelcomePage
 import os
 
@@ -24,12 +24,12 @@ class MainWindow(QMainWindow):
         self.addDockWidget(Qt.TopDockWidgetArea, self.editor_tabs_dock)
 
         self.externalFile.connect(
-            lambda filepath: self.add_editor_tab(t := CodeEditor(self.editor_tabs_dock, filepath=filepath), t.get_file_base_name()))
+            lambda filepath: self.add_editor_tab(t := CodeEditorWidget(self.editor_tabs_dock, filepath=filepath), t.get_file_base_name()))
         self.check_cmd_args()
 
     @Slot()
     def on_actionNew_triggered(self):
-        new_editor = CodeEditor(self.editor_tabs_dock, filepath=None)
+        new_editor = CodeEditorWidget(self.editor_tabs_dock, filepath=None)
         self.add_editor_tab(new_editor, new_editor.get_file_base_name())
 
     @Slot()
@@ -39,16 +39,16 @@ class MainWindow(QMainWindow):
             # check if already opened
             for i in range(self.editor_tabs.count()):
                 page = self.editor_tabs.widget(i)
-                if isinstance(page, CodeEditor):
+                if isinstance(page, CodeEditorWidget):
                     if page.filepath == filename[0]:
                         return
 
-            self.add_editor_tab(ce := CodeEditor(self.editor_tabs_dock, filename[0]), ce.get_file_base_name())
+            self.add_editor_tab(ce := CodeEditorWidget(self.editor_tabs_dock, filename[0]), ce.get_file_base_name())
 
     @Slot()
     def on_actionSave_triggered(self):
         editor = self.editor_tabs.currentWidget()
-        if not isinstance(editor, CodeEditor):
+        if not isinstance(editor, CodeEditorWidget):
             return
 
         if editor.is_new_file():
@@ -66,10 +66,13 @@ class MainWindow(QMainWindow):
         self.editor_tabs.setTabText(self.editor_tabs.currentIndex(), editor.get_file_base_name())
 
     def add_editor_tab(self, widget: QWidget, title: str):
+        if self.editor_tabs.count() == 1:
+            # remove welcome page when new pages opened
+            if isinstance(self.editor_tabs.widget(0), WelcomePage):
+                self.editor_tabs.removeTab(0)
         self.editor_tabs.addTab(widget, title)
 
     def add_welcome_page(self):
-        # TODO: add welcome page (like vscode)
         page = WelcomePage(self)
         self.add_editor_tab(page, 'Welcome')
 
@@ -82,6 +85,4 @@ class MainWindow(QMainWindow):
             else:
                 QMessageBox.information(self, 'Error', 'Invalid file', QMessageBox.Ok)
         else:
-            # create untitled new file
-            # self.addNewEditor(None)
             self.add_welcome_page()

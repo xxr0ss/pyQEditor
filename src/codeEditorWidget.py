@@ -5,9 +5,9 @@ from PySide6.QtCore import QSize, Slot
 from ui.ui_codeeditor import Ui_CodeEditor
 
 
-class CodeEditor(QWidget):
+class CodeEditorWidget(QWidget):
     def __init__(self, parent, filepath=None):
-        super(CodeEditor, self).__init__()
+        super(CodeEditorWidget, self).__init__()
         self.parent = parent
         self.ui = Ui_CodeEditor()
         self.ui.setupUi(self)
