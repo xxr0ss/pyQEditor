@@ -1,10 +1,10 @@
-from devtools import fileClearUp, compileUI
+from devtools import fileClearUp, fileGen
 import argparse
 import os
 
 
 def rm(args):
-    if not any((args.uic, args.pyc)):
+    if not any((args.uic, args.pyc, args.rcc)):
         print('Please specify type of files to remove')
         return
 
@@ -12,22 +12,37 @@ def rm(args):
         fileClearUp.removeAllUicFiles()
     if args.pyc:
         fileClearUp.removeAllPycFiles()
+    if args.rcc:
+        fileClearUp.removeAllRcFiles()
+
 
 def uic(args):
     if args.all:
-        compileUI.compileAll()
+        fileGen.compileAllUi()
     elif args.uifilename is not None:
-        files_dir = os.sep.join((os.getcwd(), 'QEditor','ui'))
+        files_dir = os.sep.join((os.getcwd(), 'QEditor', 'ui'))
         for f in args.uifilename:
             if not f.endswith('.ui'):
                 f += '.ui'
-            compileUI.compileUi(os.path.join(files_dir, f))
+            fileGen.compileUi(os.path.join(files_dir, f))
+
+
+def rcc(args):
+    if args.all:
+        fileGen.compile_all_qrc()
+    elif args.qrcfilename is not None:
+        files_dir = os.sep.join((os.getcwd(), 'QEditor'))
+        for f in args.uifilename:
+            if not f.endswith('.qrc'):
+                f += '.qrc'
+            fileGen.compileUi(os.path.join(files_dir, f))
+
 
 def main_parse():
     parser = argparse.ArgumentParser(description="Dev Tools")
     parser.add_argument('-v', '--verbose', action='store_true', help='show more information')
 
-    # parser.add_argument('rm', help='remove specifiled type of files')
+    # parser.add_argument('rm', help='remove specified type of files')
     subparsers = parser.add_subparsers(
         title='supported commands', help='sub-command help')
 
@@ -38,6 +53,7 @@ def main_parse():
                            help='remove all uic compiled files')
     parser_rm.add_argument('--pyc', action='store_true',
                            help='remove all pyc files')
+    parser_rm.add_argument('--rcc', action='store_true', help='remove all rc files')
     parser_rm.set_defaults(func=rm)
 
     # parser to handle .ui compiling
@@ -46,6 +62,12 @@ def main_parse():
         '-a', '--all', action='store_true', help='compile all ui files')
     parser_uic.add_argument(dest='uifilename', metavar='filename', nargs='*')
     parser_uic.set_defaults(func=uic)
+
+    parser_rcc = subparsers.add_parser('rcc', help='compile rcc files')
+    parser_rcc.add_argument(
+        '-a', '--all', action='store_true', help='compile all rcc files')
+    parser_rcc.add_argument(dest='qrcfilename', metavar='filename', nargs='*')
+    parser_rcc.set_defaults(func=rcc)
 
     return parser.parse_args()
 
