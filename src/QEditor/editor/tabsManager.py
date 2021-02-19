@@ -23,9 +23,6 @@ class TabsManager(QObject):
         self._tabs.tabCloseRequested.connect(self.remove_editor_tab)
         # make tabs movable (their order can be changed)
         self._tabs.setMovable(True)
-        # FIXME
-        # self._tabs.tabBar().setStyleSheet('QTabBar::close-button{ image: url("QEditor/ui/closeButton.png") }')
-        # self._tabs.tabBar().setStyleSheet('QTabBar::close-button{ image: url("qrc:///default/icons/closeButton.png") }')
 
     @property
     def tabs(self):
@@ -44,9 +41,9 @@ class TabsManager(QObject):
         idx = self._tabs.addTab(widget, title)
         self._tabs.setCurrentIndex(idx)
 
+        # use customized Close Button
         close_side = self.side_enum[widget.style().styleHint(
             QStyle.SH_TabBar_CloseButtonPosition, None, widget)]
-
         self._tabs.tabBar().setTabButton(idx, close_side, btn := CloseButton(self._tabs.tabBar()))
         btn.clicked.connect(lambda: self._tabs.tabCloseRequested.emit(idx))
 
@@ -154,5 +151,14 @@ class CloseButton(QAbstractButton):
             mode = QIcon.Disabled
 
         state: QIcon.State = QIcon.On if option.state & QStyle.State_Sunken else QIcon.Off
-        pixmap = QIcon(QPixmap(':/default/icons/ui/closeButton.png')).pixmap(QSize(size, size), self.devicePixelRatio(), mode, state)
+        pixmap = CloseButton.tabBar_close_button_icon().pixmap(QSize(size, size), self.devicePixelRatio(), mode, state)
         self.style().proxy().drawItemPixmap(p, option.rect, Qt.AlignCenter, pixmap)
+
+    @staticmethod
+    def tabBar_close_button_icon() -> QIcon:
+        icon = QIcon()
+        # add
+        icon.addPixmap(QPixmap(':/default/icons/ui/closeButton.png'), QIcon.Normal, QIcon.Off)
+        icon.addPixmap(QPixmap(':/default/icons/ui/closeButton_down.png'), QIcon.Normal, QIcon.On)
+        icon.addPixmap(QPixmap(':/default/icons/ui/closeButton_hover.png'), QIcon.Active, QIcon.Off)
+        return icon
