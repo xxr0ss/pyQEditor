@@ -1,20 +1,31 @@
-from PySide6.QtCore import QObject, Slot
-from PySide6.QtWidgets import QWidget, QTabWidget, QMessageBox
+from PySide6.QtCore import QEvent, QObject, QSize, Qt, Signal, Slot
+from PySide6.QtGui import QEnterEvent, QIcon, QPaintEvent, QPainter, QPixmap
+from PySide6.QtWidgets import QAbstractButton, QPushButton, QStyle, QStyleOption, QStyleOptionButton, QTabBar, QWidget, \
+    QTabWidget, QMessageBox
 from ..welcomePage import WelcomePage
 from ..editor.codeEditorWidget import CodeEditorWidget
+from ..rc_icons import *
 
 
 class TabsManager(QObject):
     modified_flag = ' *'
+    side_enum = [QTabBar.ButtonPosition.LeftSide, QTabBar.ButtonPosition.RightSide]
+
+    tabs_empty = Signal()
 
     def __init__(self, parent):
         super(TabsManager, self).__init__()
         self.parent = parent
         self._tabs = QTabWidget()
         self._tabs.setTabPosition(QTabWidget.North)
-        self._tabs.setTabsClosable(True)  # so that there will be a 'X' on tab for closing
+        # so that there will be a 'X' on tab for closing
+        self._tabs.setTabsClosable(True)
         self._tabs.tabCloseRequested.connect(self.remove_editor_tab)
-        self._tabs.setMovable(True) # make tabs movable (their order can be changed)
+        # make tabs movable (their order can be changed)
+        self._tabs.setMovable(True)
+        # FIXME
+        # self._tabs.tabBar().setStyleSheet('QTabBar::close-button{ image: url("QEditor/ui/closeButton.png") }')
+        # self._tabs.tabBar().setStyleSheet('QTabBar::close-button{ image: url("qrc:///default/icons/closeButton.png") }')
 
     @property
     def tabs(self):
@@ -27,11 +38,17 @@ class TabsManager(QObject):
                 self._tabs.removeTab(0)
         if isinstance(widget, CodeEditorWidget):
             # mark tab as modified when content of editor changed
-            widget.content_status_changed.connect(lambda need_saving: self.update_tab_status(widget, need_saving))
-            idx = self._tabs.addTab(widget, title)
-            self._tabs.setCurrentIndex(idx)
-        elif isinstance(widget, WelcomePage):
-            self._tabs.addTab(widget, title)
+            widget.content_status_changed.connect(
+                lambda need_saving: self.update_tab_status(widget, need_saving))
+
+        idx = self._tabs.addTab(widget, title)
+        self._tabs.setCurrentIndex(idx)
+
+        close_side = self.side_enum[widget.style().styleHint(
+            QStyle.SH_TabBar_CloseButtonPosition, None, widget)]
+
+        self._tabs.tabBar().setTabButton(idx, close_side, btn := CloseButton(self._tabs.tabBar()))
+        btn.clicked.connect(lambda: self._tabs.tabCloseRequested.emit(idx))
 
     @Slot()
     def remove_editor_tab(self, index):
@@ -44,7 +61,8 @@ class TabsManager(QObject):
                     self.parent.on_actionSave_triggered()
                     if tab.need_saving:
                         # opened save file fileDialog but not actually saved
-                        QMessageBox.information(tab, 'Information', 'File not saved', QMessageBox.Ok)
+                        QMessageBox.information(
+                            tab, 'Information', 'File not saved', QMessageBox.Ok)
                         return
                 elif button == QMessageBox.No:
                     pass
@@ -55,6 +73,8 @@ class TabsManager(QObject):
                     # it's not possible to reach here right?
 
         self._tabs.removeTab(index)
+        if self._tabs.count() == 0:
+            self.tabs_empty.emit()
 
     @Slot()
     def update_tab_status(self, w: CodeEditorWidget, need_saving: bool):
@@ -69,3 +89,70 @@ class TabsManager(QObject):
             # no need to set its 'need_saving' status back to False
             text.removesuffix(self.modified_flag)
         self._tabs.setTabText(idx, text)
+
+
+class CloseButton(QAbstractButton):
+    def __init__(self, parent: QWidget):
+        super(CloseButton, self).__init__(parent)
+        self.parent = parent
+        self.setFocusPolicy(Qt.NoFocus)
+        self.resize(self.sizeHint())
+        self.setEnabled(True)
+        self.clicked.connect(self.log_clicked)
+
+    @Slot()
+    def log_clicked(self):
+        print('Close Button clicked')
+
+    def sizeHint(self) -> QSize:
+        self.ensurePolished()
+        width = self.style().pixelMetric(QStyle.PM_TabCloseIndicatorWidth, None, self)
+        height = self.style().pixelMetric(QStyle.PM_TabCloseIndicatorHeight, None, self)
+        return QSize(width, height)
+
+    def minimumSizeHint(self) -> QSize:
+        return self.sizeHint()
+
+    def enterEvent(self, event: QEnterEvent) -> None:
+        if self.isEnabled():
+            self.update()
+        QAbstractButton.enterEvent(self, event)
+
+    def leaveEvent(self, event: QEvent) -> None:
+        if self.isEnabled():
+            self.update()
+        QAbstractButton.leaveEvent(self, event)
+
+    def paintEvent(self, event: QPaintEvent) -> None:
+        option = QStyleOption()
+        option.initFrom(self)
+        if self.isEnabled() and self.underMouse() and not self.isCheckable() and not self.isDown():
+            option.state |= QStyle.State_Raised
+        if self.isChecked():
+            option.state |= QStyle.State_On
+        if self.isDown():
+            option.state |= QStyle.State_Sunken
+
+        tb: QTabBar = self.parent
+        if isinstance(tb, QTabBar):
+            index = tb.currentIndex()
+            position = TabsManager.side_enum[tb.style().styleHint(QStyle.SH_TabBar_CloseButtonPosition, None, tb)]
+            if tb.tabButton(index, position):
+                option.state |= QStyle.State_Selected
+
+        p = QPainter(self)
+        self.style_draw(option, p)
+
+    def style_draw(self, option: QStyleOption, p: QPainter):
+        # 移植PE_IndicatorTabClose
+        size = self.style().proxy().pixelMetric(QStyle.PM_SmallIconSize, option)
+        mode: QIcon.Mode = (QIcon.Active if option.state & QStyle.State_Raised else QIcon.Normal) \
+            if option.state & QStyle.State_Enabled else QIcon.Disabled
+        if not option.state & QStyle.State_Raised \
+                and not option.state & QStyle.State_Sunken \
+                and not option.state & QStyle.State_Selected:
+            mode = QIcon.Disabled
+
+        state: QIcon.State = QIcon.On if option.state & QStyle.State_Sunken else QIcon.Off
+        pixmap = QIcon(QPixmap(':/default/icons/ui/closeButton.png')).pixmap(QSize(size, size), self.devicePixelRatio(), mode, state)
+        self.style().proxy().drawItemPixmap(p, option.rect, Qt.AlignCenter, pixmap)

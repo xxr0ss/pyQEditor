@@ -20,6 +20,8 @@ class MainWindow(QMainWindow):
         self.editor_tabs_dock = QDockWidget('', self)
 
         self.tabs_manager = TabsManager(parent=self)
+        self.tabs_manager.tabs_empty.connect(lambda: self.close_editor_tabs(self.editor_tabs_dock))
+
         tabs = self.tabs_manager
         self.editor_tabs_dock.setWidget(self.tabs_manager.tabs)
         self.editor_tabs_dock.resize(self.size())
@@ -72,6 +74,10 @@ class MainWindow(QMainWindow):
             f.write(editor.get_content())
         editor.filepath = filepath
         tabs.setTabText(tabs.currentIndex(), editor.get_file_base_name())
+
+    @Slot()
+    def close_editor_tabs(self, dock_tabs: QDockWidget):
+        dock_tabs.close()
 
     def add_welcome_page(self):
         page = WelcomePage(self)

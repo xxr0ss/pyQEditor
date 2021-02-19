@@ -1,0 +1,5 @@
+<RCC>
+    <qresource prefix="/default/icons">
+        <file>ui/closeButton.png</file>
+    </qresource>
+</RCC>
