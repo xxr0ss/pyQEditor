@@ -44,7 +44,7 @@ class EditingArea(QPlainTextEdit):
         self.cursorPositionChanged.connect(self.highlight_current_line)
     
     def setupStyle(self):
-        with open(os.sep.join((os.getcwd(), 'QEditor/ui/stylesheet.css')), 'r') as f:
+        with open(os.sep.join((os.getcwd(), 'QEditor/ui/stylesheet.qss')), 'r') as f:
             self.setStyleSheet(f.read())
 
     def line_number_area_width(self):
