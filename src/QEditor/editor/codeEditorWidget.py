@@ -6,7 +6,7 @@ from ..ui.ui_codeeditor import Ui_CodeEditor
 
 
 class CodeEditorWidget(QWidget):
-    content_status_changed = Signal(bool)    # self.need_saving
+    content_status_changed = Signal(bool)    # self._need_saving
 
     def __init__(self, parent=None, filepath=None):
         super(CodeEditorWidget, self).__init__()
@@ -18,9 +18,9 @@ class CodeEditorWidget(QWidget):
         self.statusBar = self.ui.statusBar
         self.editingArea.cursorPositionChanged.connect(self.update_statusbar_cursor_pos)
 
-        self.need_saving = False
+        self._need_saving = False
         self.editingArea.textChanged.connect(lambda: self.content_status_changed.emit(True))
-        self.content_status_changed.connect(self.on_content_status_change)
+        self.content_status_changed[bool].connect(self.content_status_change)
 
         self._filepath = filepath
         if filepath is not None:
@@ -58,6 +58,14 @@ class CodeEditorWidget(QWidget):
     @filepath.setter
     def filepath(self, value):
         self._filepath = value
+    
+    @property
+    def need_saving(self):
+        return self._need_saving
+
+    @need_saving.setter
+    def need_saving(self, value):
+        self._need_saving = value
 
     @property
     def editingArea(self):
@@ -89,8 +97,8 @@ class CodeEditorWidget(QWidget):
         self.statusBar.updateCursorPos((row, col))
 
     @Slot()
-    def on_content_status_change(self, need_saving: bool):
-        self.need_saving = need_saving
+    def content_status_change(self, need_saving: bool):
+        self._need_saving = need_saving
 
     @Slot()
     def file_saved(self):
