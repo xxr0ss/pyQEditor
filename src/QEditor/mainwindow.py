@@ -16,6 +16,7 @@ class MainWindow(QMainWindow):
         super().__init__()
         self.ui = Ui_mainWindow()
         self.ui.setupUi(self)
+        self.setWindowTitle('No File')
 
         self.editor_tabs_dock = QDockWidget('', self)
 
@@ -74,6 +75,7 @@ class MainWindow(QMainWindow):
             f.write(editor.get_content())
         editor.filepath = filepath
         tabs.setTabText(tabs.currentIndex(), editor.get_file_base_name())
+        editor.need_saving = False
 
     @Slot()
     def close_editor_tabs(self, dock_tabs: QDockWidget):

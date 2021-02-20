@@ -1,7 +1,7 @@
 from PySide6.QtCore import QEvent, QObject, QSize, Qt, Signal, Slot
 from PySide6.QtGui import QEnterEvent, QIcon, QPaintEvent, QPainter, QPixmap
-from PySide6.QtWidgets import QAbstractButton, QPushButton, QStyle, QStyleOption, QStyleOptionButton, QTabBar, QWidget, \
-    QTabWidget, QMessageBox
+from PySide6.QtWidgets import QAbstractButton, QStyle, QStyleOption, QTabBar, QWidget, \
+    QTabWidget, QMessageBox, QMainWindow
 from ..welcomePage import WelcomePage
 from ..editor.codeEditorWidget import CodeEditorWidget
 from ..rc_icons import *
@@ -13,9 +13,9 @@ class TabsManager(QObject):
 
     tabs_empty = Signal()
 
-    def __init__(self, parent):
+    def __init__(self, parent: QMainWindow):
         super(TabsManager, self).__init__()
-        self.parent = parent
+        self.parent = parent    # MainWindow
         self._tabs = QTabWidget()
         self._tabs.setTabPosition(QTabWidget.North)
         # so that there will be a 'X' on tab for closing
@@ -29,7 +29,7 @@ class TabsManager(QObject):
         return self._tabs
 
     def add_editor_tab(self, widget: QWidget, title: str):
-        # auto remove welcome page by default when opened new tab
+        # automatically remove welcome page by default when opened new tab
         if self._tabs.count() == 1:
             if isinstance(self._tabs.widget(0), WelcomePage):
                 self._tabs.removeTab(0)
@@ -39,6 +39,7 @@ class TabsManager(QObject):
                 lambda need_saving: self.update_tab_status(widget, need_saving))
 
         idx = self._tabs.addTab(widget, title)
+        # self.parent.setWindowTitle(title)
         self._tabs.setCurrentIndex(idx)
 
         # use customized Close Button
