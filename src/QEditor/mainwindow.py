@@ -18,25 +18,14 @@ class MainWindow(QMainWindow):
         self.ui.setupUi(self)
         self.setWindowTitle('No File')
 
-        self.editor_tabs_dock = QDockWidget('', self)
-
         self.tabs_manager = TabsManager(parent=self)
-        self.tabs_manager.tabs_empty.connect(lambda: self.close_editor_tabs(self.editor_tabs_dock))
+        self.editor_tabs_dock = self.add_dock_tab_manager(self.tabs_manager)
 
-        tabs = self.tabs_manager
-        self.editor_tabs_dock.setWidget(self.tabs_manager.tabs)
-        self.editor_tabs_dock.resize(self.size())
-
-        self.addDockWidget(Qt.TopDockWidgetArea, self.editor_tabs_dock)
-
-        self.externalFile.connect(
-            lambda filepath: tabs.add_editor_tab(
-                t := CodeEditorWidget(parent=self.editor_tabs_dock, filepath=filepath),
-                t.get_file_base_name()))
         self.check_cmd_args()
 
     @Slot()
     def on_actionNew_triggered(self):
+        self.make_sure_tabs_dock_visible()
         new_editor = CodeEditorWidget(parent=self.editor_tabs_dock, filepath=None)
         self.tabs_manager.add_editor_tab(new_editor, new_editor.get_file_base_name())
 
@@ -44,16 +33,20 @@ class MainWindow(QMainWindow):
     def on_actionOpen_triggered(self):
         filename = QFileDialog.getOpenFileName(self, 'Open File')
         tabs = self.tabs_manager.tabs
-        if filename[0] != '':
-            # check if already opened
-            for i in range(tabs.count()):
-                page = tabs.widget(i)
-                if isinstance(page, CodeEditorWidget):
-                    if page.filepath == filename[0]:
-                        return
 
-            self.tabs_manager.add_editor_tab(ce := CodeEditorWidget(self.editor_tabs_dock, filename[0]),
-                                             ce.get_file_base_name())
+        if filename[0] == '':
+            return
+
+        # check if already opened
+        for i in range(tabs.count()):
+            page = tabs.widget(i)
+            if isinstance(page, CodeEditorWidget):
+                if page.filepath == filename[0]:
+                    return
+
+        self.make_sure_tabs_dock_visible()
+        self.tabs_manager.add_editor_tab(ce := CodeEditorWidget(self.editor_tabs_dock, filename[0]),
+                                         ce.get_file_base_name())
 
     @Slot()
     def on_actionSave_triggered(self):
@@ -80,6 +73,26 @@ class MainWindow(QMainWindow):
     @Slot()
     def close_editor_tabs(self, dock_tabs: QDockWidget):
         dock_tabs.close()
+
+    def make_sure_tabs_dock_visible(self):
+        if self.editor_tabs_dock.isHidden():
+            self.editor_tabs_dock.show()
+
+    def add_dock_tab_manager(self, tabs_mgr: TabsManager) -> QDockWidget:
+        dock = QDockWidget('', self)
+        dock.setWidget(tabs_mgr.tabs)
+        dock.resize(self.size())
+        # dock.setFeatures(~QDockWidget.DockWidgetClosable)
+
+        self.addDockWidget(Qt.TopDockWidgetArea, dock)
+
+        tabs_mgr.tabs_empty.connect(lambda: self.close_editor_tabs(dock))
+        self.externalFile.connect(
+            lambda filepath: tabs_mgr.add_editor_tab(
+                t := CodeEditorWidget(parent=dock, filepath=filepath),
+                t.get_file_base_name()))
+
+        return dock
 
     def add_welcome_page(self):
         page = WelcomePage(self)

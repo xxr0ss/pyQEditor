@@ -48,6 +48,9 @@ class TabsManager(QObject):
         self._tabs.tabBar().setTabButton(idx, close_side, btn := CloseButton(self._tabs.tabBar()))
         btn.clicked.connect(lambda: self._tabs.tabCloseRequested.emit(idx))
 
+        if isinstance(widget, CodeEditorWidget):
+            widget.editingArea.setFocus()
+
     @Slot()
     def remove_editor_tab(self, index):
         tab = self._tabs.widget(index)

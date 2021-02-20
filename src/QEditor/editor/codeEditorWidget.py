@@ -1,5 +1,5 @@
 import os
-from PySide6.QtWidgets import QWidget
+from PySide6.QtWidgets import QWidget, QPlainTextEdit
 from PySide6.QtCore import QSize, Slot, Signal
 
 from ..ui.ui_codeeditor import Ui_CodeEditor
@@ -14,7 +14,7 @@ class CodeEditorWidget(QWidget):
         self.ui = Ui_CodeEditor()
         self.ui.setupUi(self)
         self.setLayout(self.ui.editorVLayout)
-        self.editingArea = self.ui.codeEditingArea
+        self._editingArea: QPlainTextEdit = self.ui.codeEditingArea
         self.statusBar = self.ui.statusBar
         self.editingArea.cursorPositionChanged.connect(self.update_statusbar_cursor_pos)
 
@@ -58,6 +58,10 @@ class CodeEditorWidget(QWidget):
     @filepath.setter
     def filepath(self, value):
         self._filepath = value
+
+    @property
+    def editingArea(self):
+        return self._editingArea
 
     def get_content(self) -> bytes:
         content = self.editingArea.toPlainText()
