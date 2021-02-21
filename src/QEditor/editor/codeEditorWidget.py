@@ -1,12 +1,14 @@
 import os
-from PySide6.QtWidgets import QWidget
+from PySide6.QtWidgets import QWidget, QPlainTextEdit
 from PySide6.QtCore import QSize, Slot, Signal
 
 from ..ui.ui_codeeditor import Ui_CodeEditor
 
 
 class CodeEditorWidget(QWidget):
-    content_status_changed = Signal(bool)    # self.need_saving
+    content_status_changed = Signal(bool)  # self._need_saving
+
+    _new_file_count = 0
 
     def __init__(self, parent=None, filepath=None):
         super(CodeEditorWidget, self).__init__()
@@ -14,13 +16,13 @@ class CodeEditorWidget(QWidget):
         self.ui = Ui_CodeEditor()
         self.ui.setupUi(self)
         self.setLayout(self.ui.editorVLayout)
-        self.editingArea = self.ui.codeEditingArea
+        self._editingArea: QPlainTextEdit = self.ui.codeEditingArea
         self.statusBar = self.ui.statusBar
         self.editingArea.cursorPositionChanged.connect(self.update_statusbar_cursor_pos)
 
-        self.need_saving = False
+        self._need_saving = False
         self.editingArea.textChanged.connect(lambda: self.content_status_changed.emit(True))
-        self.content_status_changed.connect(self.on_content_status_change)
+        self.content_status_changed[bool].connect(self.content_status_change)
 
         self._filepath = filepath
         if filepath is not None:
@@ -38,7 +40,7 @@ class CodeEditorWidget(QWidget):
             content = f.read()
             self.editingArea.setPlainText(content)
 
-        # always make file path '/'-style in CodeEditor
+        # keep file path '/'-style in CodeEditor
         # because both Windows and Linux are happy to use it
         if '\\' in self._filepath:
             self._filepath = self._filepath.replace('\\', '/')
@@ -46,7 +48,8 @@ class CodeEditorWidget(QWidget):
         self.setWindowTitle(self.get_file_base_name())
 
     def new_file(self):
-        self.setWindowTitle('new file')
+        CodeEditorWidget._new_file_count += 1
+        self.setWindowTitle('untitled-%d' % CodeEditorWidget._new_file_count)
 
     def sizeHint(self) -> QSize:
         return self.parent.size()
@@ -59,6 +62,18 @@ class CodeEditorWidget(QWidget):
     def filepath(self, value):
         self._filepath = value
 
+    @property
+    def need_saving(self):
+        return self._need_saving
+
+    @need_saving.setter
+    def need_saving(self, value):
+        self._need_saving = value
+
+    @property
+    def editingArea(self):
+        return self._editingArea
+
     def get_content(self) -> bytes:
         content = self.editingArea.toPlainText()
         # TODO 这里要判断吗
@@ -66,15 +81,19 @@ class CodeEditorWidget(QWidget):
             content = content.encode()
         return content
 
-    # get file base name, for example 'D:/a/b/c.txt' will return 'c.txt'.
-    # useful when being used as window title
     def get_file_base_name(self) -> str:
+        """
+        get file base name\n
+        for example 'D:/a/b/c.txt' will return 'c.txt'. useful when being used as window title
+
+        use `widget.windowTitle()` instead if it's for display purposes
+
+        :return: if editor have associated file path, then return fileBaseName, otherwise return ''
+        """
         if self._filepath is None:
-            return 'New File'
+            return ''
         return self._filepath.split('/')[-1]
 
-    # check if code editor is using a new file that haven't been saved
-    # (so its filepath is None)
     def is_new_file(self) -> bool:
         return self._filepath is None
 
@@ -85,9 +104,5 @@ class CodeEditorWidget(QWidget):
         self.statusBar.updateCursorPos((row, col))
 
     @Slot()
-    def on_content_status_change(self, need_saving: bool):
-        self.need_saving = need_saving
-
-    @Slot()
-    def file_saved(self):
-        self.content_status_changed.emit(False)
+    def content_status_change(self, need_saving: bool):
+        self._need_saving = need_saving

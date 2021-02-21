@@ -1,5 +1,6 @@
 from PySide6.QtCore import Qt, Signal, Slot, QCoreApplication, qDebug  # for enum flags
-from PySide6.QtWidgets import QMainWindow, QFileDialog, QDockWidget, QMessageBox, QTabWidget, QWidget
+from PySide6.QtWidgets import QMainWindow, QFileDialog, QDockWidget, QMessageBox
+from PySide6.QtGui import QCloseEvent
 from .editor.codeEditorWidget import CodeEditorWidget
 from .welcomePage import WelcomePage
 from .editor.tabsManager import TabsManager
@@ -10,7 +11,7 @@ from .ui.ui_mainwindow import Ui_mainWindow
 
 class MainWindow(QMainWindow):
     # Signals
-    externalFile = Signal(str)
+    external_file = Signal(str)
 
     def __init__(self):
         super().__init__()
@@ -18,72 +19,93 @@ class MainWindow(QMainWindow):
         self.ui.setupUi(self)
         self.setWindowTitle('No File')
 
-        self.editor_tabs_dock = QDockWidget('', self)
-
         self.tabs_manager = TabsManager(parent=self)
-        self.tabs_manager.tabs_empty.connect(lambda: self.close_editor_tabs(self.editor_tabs_dock))
+        # TODO 取消QDockWidget的实现，自定义Tab的分离逻辑
+        self.editor_tabs_dock = self.add_dock_tab_manager(self.tabs_manager)
 
-        tabs = self.tabs_manager
-        self.editor_tabs_dock.setWidget(self.tabs_manager.tabs)
-        self.editor_tabs_dock.resize(self.size())
-
-        self.addDockWidget(Qt.TopDockWidgetArea, self.editor_tabs_dock)
-
-        self.externalFile.connect(
-            lambda filepath: tabs.add_editor_tab(
-                t := CodeEditorWidget(parent=self.editor_tabs_dock, filepath=filepath),
-                t.get_file_base_name()))
         self.check_cmd_args()
 
     @Slot()
     def on_actionNew_triggered(self):
+        self.make_sure_tabs_dock_visible()
         new_editor = CodeEditorWidget(parent=self.editor_tabs_dock, filepath=None)
-        self.tabs_manager.add_editor_tab(new_editor, new_editor.get_file_base_name())
+        self.tabs_manager.add_editor_tab(new_editor, new_editor.windowTitle())
 
     @Slot()
     def on_actionOpen_triggered(self):
         filename = QFileDialog.getOpenFileName(self, 'Open File')
         tabs = self.tabs_manager.tabs
-        if filename[0] != '':
-            # check if already opened
-            for i in range(tabs.count()):
-                page = tabs.widget(i)
-                if isinstance(page, CodeEditorWidget):
-                    if page.filepath == filename[0]:
-                        return
 
-            self.tabs_manager.add_editor_tab(ce := CodeEditorWidget(self.editor_tabs_dock, filename[0]),
-                                             ce.get_file_base_name())
+        if filename[0] == '':
+            return
+
+        # check if already opened
+        for i in range(tabs.count()):
+            page = tabs.widget(i)
+            if isinstance(page, CodeEditorWidget):
+                if page.filepath == filename[0]:
+                    return
+
+        self.make_sure_tabs_dock_visible()
+        ce = CodeEditorWidget(self.editor_tabs_dock, filename[0])
+        self.tabs_manager.add_editor_tab(ce, ce.windowTitle())
 
     @Slot()
     def on_actionSave_triggered(self):
         tabs = self.tabs_manager.tabs
-        editor = tabs.currentWidget()
-        if not isinstance(editor, CodeEditorWidget):
-            return
-
-        if editor.is_new_file():
-            # new file to save
-            name = QFileDialog.getSaveFileName(self, 'Save File')
-            if name[0] == '':
-                return
-            filepath = name[0]
-        else:
-            filepath = editor.filepath
-
-        with open(filepath, 'wb') as f:
-            f.write(editor.get_content())
-        editor.filepath = filepath
-        tabs.setTabText(tabs.currentIndex(), editor.get_file_base_name())
-        editor.need_saving = False
+        tab = tabs.currentWidget()
+        self.save_editor_tab(tab)
+        tabs.setTabText(tabs.currentIndex(), tab.get_file_base_name())
 
     @Slot()
     def close_editor_tabs(self, dock_tabs: QDockWidget):
         dock_tabs.close()
 
+    def save_editor_tab(self, tab):
+        """
+        Save tab's content if the tab holds contents, for now: the CodeEditorWidget
+        :param tab: widget from tabWidgets
+        """
+        if not isinstance(tab, CodeEditorWidget):
+            return
+
+        if tab.is_new_file():
+            # new file to save
+            name = QFileDialog.getSaveFileName(self, 'Save File', tab.windowTitle())
+            if name[0] == '':
+                return
+            filepath = name[0]
+        else:
+            filepath = tab.filepath
+
+        with open(filepath, 'wb') as f:
+            f.write(tab.get_content())
+
+        tab.filepath = filepath
+        tab.need_saving = False
+
+    def make_sure_tabs_dock_visible(self):
+        if self.editor_tabs_dock.isHidden():
+            self.editor_tabs_dock.show()
+
+    def add_dock_tab_manager(self, tabs_mgr: TabsManager) -> QDockWidget:
+        dock = QDockWidget('', self)
+        dock.setWidget(tabs_mgr.tabs)
+        dock.resize(self.size())
+
+        self.addDockWidget(Qt.TopDockWidgetArea, dock)
+
+        tabs_mgr.tabs_empty.connect(lambda: self.close_editor_tabs(dock))
+        self.external_file.connect(
+            lambda filepath: tabs_mgr.add_editor_tab(
+                t := CodeEditorWidget(parent=dock, filepath=filepath),
+                t.windowTitle()))
+        # the lambda above: python pass these args from left to right so it is okay
+
+        return dock
+
     def add_welcome_page(self):
         page = WelcomePage(self)
-        page.resize(self.size())
         self.tabs_manager.add_editor_tab(page, 'Welcome')
 
     def check_cmd_args(self):
@@ -91,8 +113,20 @@ class MainWindow(QMainWindow):
         if len(argv) > 1:
             if os.path.exists(argv[1]):
                 qDebug(b'opening file from command line (could be file drop on executable)')
-                self.externalFile.emit(argv[1])
+                self.external_file.emit(argv[1])
             else:
                 QMessageBox.information(self, 'Error', 'Invalid file', QMessageBox.Ok)
         else:
             self.add_welcome_page()
+
+    def closeEvent(self, event: QCloseEvent) -> None:
+        # when close application with tabs at 'need_saving' status, will prompt
+        tabs_mgr = self.tabs_manager
+        if tabs_mgr.any_tab_needs_saving():
+            unhandled_widgets = tabs_mgr.all_widgets
+            for w in unhandled_widgets:
+                if not tabs_mgr.remove_editor_tab(tabs_mgr.tabs.indexOf(w)):
+                    # canceled
+                    event.ignore()
+                    return
+        event.accept()

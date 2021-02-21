@@ -15,7 +15,7 @@ class TabsManager(QObject):
 
     def __init__(self, parent: QMainWindow):
         super(TabsManager, self).__init__()
-        self.parent = parent    # MainWindow
+        self.parent = parent  # MainWindow
         self._tabs = QTabWidget()
         self._tabs.setTabPosition(QTabWidget.North)
         # so that there will be a 'X' on tab for closing
@@ -48,31 +48,34 @@ class TabsManager(QObject):
         self._tabs.tabBar().setTabButton(idx, close_side, btn := CloseButton(self._tabs.tabBar()))
         btn.clicked.connect(lambda: self._tabs.tabCloseRequested.emit(idx))
 
+        if isinstance(widget, CodeEditorWidget):
+            widget.editingArea.setFocus()
+
     @Slot()
     def remove_editor_tab(self, index):
+        # TODO 重构成根据tab进行选择，拆成两个/多个函数，以像vsc那样适应多种页面
+        # return False if canceled
         tab = self._tabs.widget(index)
         if isinstance(tab, CodeEditorWidget):
             if tab.need_saving:
-                button = QMessageBox.warning(tab, 'Close tab', 'Do you want to save changes?',
+                button = QMessageBox.warning(tab, 'Closing', f"Do you want to save changes to '{tab.windowTitle()}'?",
                                              QMessageBox.Ok | QMessageBox.No | QMessageBox.Cancel)
                 if button == QMessageBox.Ok:
-                    self.parent.on_actionSave_triggered()
+                    self.parent.save_editor_tab(tab)
                     if tab.need_saving:
                         # opened save file fileDialog but not actually saved
                         QMessageBox.information(
                             tab, 'Information', 'File not saved', QMessageBox.Ok)
-                        return
+                        return False
                 elif button == QMessageBox.No:
                     pass
                 elif button == QMessageBox.Cancel:
-                    return
-                else:
-                    pass
-                    # it's not possible to reach here right?
+                    return False
 
         self._tabs.removeTab(index)
         if self._tabs.count() == 0:
             self.tabs_empty.emit()
+        return True
 
     @Slot()
     def update_tab_status(self, w: CodeEditorWidget, need_saving: bool):
@@ -88,8 +91,31 @@ class TabsManager(QObject):
             text.removesuffix(self.modified_flag)
         self._tabs.setTabText(idx, text)
 
+    def any_tab_needs_saving(self) -> bool:
+        count = self._tabs.count()
+        for i in range(count):
+            widget: CodeEditorWidget = self._tabs.widget(i)
+            if not isinstance(widget, CodeEditorWidget):
+                continue
+            if widget.need_saving:
+                print('[tabsManager] need_saving found: idx ', i)
+                return True
+        return False
+
+    @property
+    def all_widgets(self) -> list[QWidget]:
+        widgets = []
+        for i in range(c := self._tabs.count()):
+            widgets.append(self._tabs.widget(i))
+        return widgets
+
 
 class CloseButton(QAbstractButton):
+    """ Customized close button
+
+    can customize the paint process of a close button, so that
+    we can easily use icons and so on.
+    """
     def __init__(self, parent: QWidget):
         super(CloseButton, self).__init__(parent)
         self.parent = parent

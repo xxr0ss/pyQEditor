@@ -5,5 +5,5 @@ QPlainTextEdit{
 }
 
 QDockWidget{
-    margin: 0
+    margin: 0;
 }
