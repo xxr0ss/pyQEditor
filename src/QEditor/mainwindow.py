@@ -11,7 +11,7 @@ from .ui.ui_mainwindow import Ui_mainWindow
 
 class MainWindow(QMainWindow):
     # Signals
-    externalFile = Signal(str)
+    external_file = Signal(str)
 
     def __init__(self):
         super().__init__()
@@ -20,6 +20,7 @@ class MainWindow(QMainWindow):
         self.setWindowTitle('No File')
 
         self.tabs_manager = TabsManager(parent=self)
+        # TODO 取消QDockWidget的实现，自定义Tab的分离逻辑
         self.editor_tabs_dock = self.add_dock_tab_manager(self.tabs_manager)
 
         self.check_cmd_args()
@@ -28,7 +29,7 @@ class MainWindow(QMainWindow):
     def on_actionNew_triggered(self):
         self.make_sure_tabs_dock_visible()
         new_editor = CodeEditorWidget(parent=self.editor_tabs_dock, filepath=None)
-        self.tabs_manager.add_editor_tab(new_editor, new_editor.get_file_base_name())
+        self.tabs_manager.add_editor_tab(new_editor, new_editor.windowTitle())
 
     @Slot()
     def on_actionOpen_triggered(self):
@@ -46,8 +47,8 @@ class MainWindow(QMainWindow):
                     return
 
         self.make_sure_tabs_dock_visible()
-        self.tabs_manager.add_editor_tab(ce := CodeEditorWidget(self.editor_tabs_dock, filename[0]),
-                                         ce.get_file_base_name())
+        ce = CodeEditorWidget(self.editor_tabs_dock, filename[0])
+        self.tabs_manager.add_editor_tab(ce, ce.windowTitle())
 
     @Slot()
     def on_actionSave_triggered(self):
@@ -61,12 +62,16 @@ class MainWindow(QMainWindow):
         dock_tabs.close()
 
     def save_editor_tab(self, tab):
+        """
+        Save tab's content if the tab holds contents, for now: the CodeEditorWidget
+        :param tab: widget from tabWidgets
+        """
         if not isinstance(tab, CodeEditorWidget):
             return
 
         if tab.is_new_file():
             # new file to save
-            name = QFileDialog.getSaveFileName(self, 'Save File')
+            name = QFileDialog.getSaveFileName(self, 'Save File', tab.windowTitle())
             if name[0] == '':
                 return
             filepath = name[0]
@@ -87,21 +92,20 @@ class MainWindow(QMainWindow):
         dock = QDockWidget('', self)
         dock.setWidget(tabs_mgr.tabs)
         dock.resize(self.size())
-        # dock.setFeatures(~QDockWidget.DockWidgetClosable)
 
         self.addDockWidget(Qt.TopDockWidgetArea, dock)
 
         tabs_mgr.tabs_empty.connect(lambda: self.close_editor_tabs(dock))
-        self.externalFile.connect(
+        self.external_file.connect(
             lambda filepath: tabs_mgr.add_editor_tab(
                 t := CodeEditorWidget(parent=dock, filepath=filepath),
-                t.get_file_base_name()))
+                t.windowTitle()))
+        # the lambda above: python pass these args from left to right so it is okay
 
         return dock
 
     def add_welcome_page(self):
         page = WelcomePage(self)
-        page.resize(self.size())
         self.tabs_manager.add_editor_tab(page, 'Welcome')
 
     def check_cmd_args(self):
@@ -109,7 +113,7 @@ class MainWindow(QMainWindow):
         if len(argv) > 1:
             if os.path.exists(argv[1]):
                 qDebug(b'opening file from command line (could be file drop on executable)')
-                self.externalFile.emit(argv[1])
+                self.external_file.emit(argv[1])
             else:
                 QMessageBox.information(self, 'Error', 'Invalid file', QMessageBox.Ok)
         else:

@@ -17,14 +17,15 @@ def removeAllRcFiles():
 def removeAllPycFiles():
     searchPath = [
         os.getcwd(),
-        os.sep.join((os.getcwd(), 'devtools')),
-        os.sep.join((os.getcwd(), 'src', 'QEditor' 'ui'))
+        os.sep.join((os.getcwd(), 'src')),
+        os.sep.join((os.getcwd(), 'src', 'QEditor')),
+        os.sep.join((os.getcwd(), 'src', 'QEditor', 'ui')),
+        os.sep.join((os.getcwd(), 'src', 'QEditor', 'editor'))
     ]
-
 
     for dir in searchPath:
         if '__pycache__' in os.listdir(dir):
-            # print(dir)
+            print(dir)
             shutil.rmtree(os.sep.join((dir, '__pycache__')))
 
 

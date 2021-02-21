@@ -15,7 +15,7 @@ class TabsManager(QObject):
 
     def __init__(self, parent: QMainWindow):
         super(TabsManager, self).__init__()
-        self.parent = parent    # MainWindow
+        self.parent = parent  # MainWindow
         self._tabs = QTabWidget()
         self._tabs.setTabPosition(QTabWidget.North)
         # so that there will be a 'X' on tab for closing
@@ -53,7 +53,7 @@ class TabsManager(QObject):
 
     @Slot()
     def remove_editor_tab(self, index):
-        # TODO 重构成根据tab进行选择，拆成两个函数
+        # TODO 重构成根据tab进行选择，拆成两个/多个函数，以像vsc那样适应多种页面
         # return False if canceled
         tab = self._tabs.widget(index)
         if isinstance(tab, CodeEditorWidget):
@@ -111,6 +111,11 @@ class TabsManager(QObject):
 
 
 class CloseButton(QAbstractButton):
+    """ Customized close button
+
+    can customize the paint process of a close button, so that
+    we can easily use icons and so on.
+    """
     def __init__(self, parent: QWidget):
         super(CloseButton, self).__init__(parent)
         self.parent = parent

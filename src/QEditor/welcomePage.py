@@ -4,6 +4,7 @@ from .ui.ui_welcomepage import Ui_welcomePage
 
 
 class WelcomePage(QWidget):
+    # TODO: add shortcuts like open file, open directory, etc.
     def __init__(self, parent):
         super(WelcomePage, self).__init__()
         self.ui = Ui_welcomePage()
