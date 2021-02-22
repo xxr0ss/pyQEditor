@@ -18,13 +18,17 @@ class TabsManager(QObject):
         super(TabsManager, self).__init__()
         self.parent = parent  # MainWindow
         self._tabs = QTabWidget()
+        self._init_tab_widget()
+
+        self.tabs_empty.connect(lambda: CodeEditorWidget.reset_new_file_count())
+
+    def _init_tab_widget(self):
         self._tabs.setTabPosition(QTabWidget.North)
         # so that there will be a 'X' on tab for closing
         self._tabs.setTabsClosable(True)
         self._tabs.tabCloseRequested.connect(self.remove_editor_tab)
         # make tabs movable (their order can be changed)
         self._tabs.setMovable(True)
-        self.tabs_empty.connect(lambda: CodeEditorWidget.reset_new_file_count())
 
     @property
     def tabs(self):
@@ -42,7 +46,7 @@ class TabsManager(QObject):
         if tab_to_close != -1:
             self._tabs.tabCloseRequested.emit(tab_to_close)
 
-    def add_editor_tab(self, widget: QWidget, title: str):
+    def add_editor_tab(self, widget: QWidget, title: str = ''):
         # automatically remove welcome page by default when opened new tab
         if self._tabs.count() == 1:
             if isinstance(self._tabs.widget(0), WelcomePage):
@@ -56,7 +60,6 @@ class TabsManager(QObject):
             )
 
         idx = self._tabs.addTab(widget, title)
-        self.parent.setWindowTitle(title)
         self._tabs.setCurrentIndex(idx)
 
         # use customized Close Button

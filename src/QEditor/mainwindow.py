@@ -26,7 +26,6 @@ class MainWindow(QMainWindow):
 
         self.main_splitter = QSplitter()
 
-        # TODO: 自定义Tab的分离逻辑
         self.init_tabs_widget()
         self.init_status_bar()
 
@@ -63,12 +62,11 @@ class MainWindow(QMainWindow):
 
         folder_exp: FolderExplorer = self.explorers_manager.folder_explorer
         folder_exp.open_folder(opened_dir)
-
-        widget = folder_exp.folder_tree_view
         folder_exp.file_clicked.connect(lambda filepath: self.external_file.emit(filepath))
         splitter = self.main_splitter
-        splitter.addWidget(widget)
+        splitter.addWidget(folder_exp)
         splitter.addWidget(self.tabs_manager.tabs)
+        splitter.setCollapsible(0, True)
         self.setCentralWidget(splitter)
 
     @Slot()
@@ -101,9 +99,19 @@ class MainWindow(QMainWindow):
         tab.filepath = filepath
         tab.need_saving = False
 
+    @Slot()
+    def update_window_title(self, index=-1):
+        if index == -1:
+            self.setWindowTitle('QEditor')
+        else:
+            current_tab = self.tabs_manager.tabs.widget(index)
+            if current_tab is not None:
+                self.setWindowTitle(self.tabs_manager.tabs.tabText(index))
+
     def init_tabs_widget(self):
         self.setCentralWidget(self.tabs_manager.tabs)
         self.external_file.connect(self.add_editor_with_check)
+        self.tabs_manager.tabs.currentChanged.connect(self.update_window_title)
 
     def init_status_bar(self):
         status_bar = self.statusBar()
