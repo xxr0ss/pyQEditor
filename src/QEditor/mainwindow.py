@@ -1,9 +1,11 @@
 from PySide6.QtCore import Qt, Signal, Slot, QCoreApplication, qDebug  # for enum flags
-from PySide6.QtWidgets import QMainWindow, QFileDialog, QMessageBox,QLabel, QWidget
+from PySide6.QtWidgets import QMainWindow, QFileDialog, QMessageBox, QLabel, QSplitter
 from PySide6.QtGui import QCloseEvent
 from .editor.codeEditorWidget import CodeEditorWidget
 from .welcomePage import WelcomePage
 from .editor.tabsManager import TabsManager
+from .explorer.folderExplorer import FolderExplorer
+from .explorer.explorersManager import ExplorersManager
 import os
 
 from .ui.ui_mainwindow import Ui_mainWindow
@@ -20,19 +22,23 @@ class MainWindow(QMainWindow):
         self.setWindowTitle('No File')
 
         self.tabs_manager = TabsManager(parent=self)
-        # TODO 自定义Tab的分离逻辑
+        self.explorers_manager = ExplorersManager(window=self)
+
+        self.main_splitter = QSplitter()
+
+        # TODO: 自定义Tab的分离逻辑
         self.init_tabs_widget()
         self.init_status_bar()
 
         self.check_cmd_args()
 
     @Slot()
-    def on_actionNew_triggered(self):
+    def on_actionNew_File_triggered(self):
         new_editor = CodeEditorWidget(parent=self, filepath=None)
         self.tabs_manager.add_editor_tab(new_editor, new_editor.windowTitle())
 
     @Slot()
-    def on_actionOpen_triggered(self):
+    def on_actionOpen_File_triggered(self):
         filename = QFileDialog.getOpenFileName(self, 'Open File')
         tabs = self.tabs_manager.tabs
 
@@ -48,6 +54,22 @@ class MainWindow(QMainWindow):
 
         ce = CodeEditorWidget(self, filename[0])
         self.tabs_manager.add_editor_tab(ce, ce.windowTitle())
+
+    @Slot()
+    def on_actionOpen_Folder_triggered(self):
+        opened_dir = QFileDialog.getExistingDirectory(self, 'Open Folder')
+        if opened_dir == '':
+            return
+
+        folder_exp: FolderExplorer = self.explorers_manager.folder_explorer
+        folder_exp.open_folder(opened_dir)
+
+        widget = folder_exp.folder_tree_view
+        folder_exp.file_clicked.connect(lambda filepath: self.external_file.emit(filepath))
+        splitter = self.main_splitter
+        splitter.addWidget(widget)
+        splitter.addWidget(self.tabs_manager.tabs)
+        self.setCentralWidget(splitter)
 
     @Slot()
     def on_actionSave_triggered(self):
@@ -81,11 +103,7 @@ class MainWindow(QMainWindow):
 
     def init_tabs_widget(self):
         self.setCentralWidget(self.tabs_manager.tabs)
-
-        self.external_file.connect(
-            lambda filepath: self.tabs_manager.add_editor_tab(
-                t := CodeEditorWidget(parent=self, filepath=filepath),
-                t.windowTitle()))
+        self.external_file.connect(self.add_editor_with_check)
 
     def init_status_bar(self):
         status_bar = self.statusBar()
@@ -93,7 +111,7 @@ class MainWindow(QMainWindow):
         cur_pos_label.setText('0, 0')
         status_bar.addPermanentWidget(cur_pos_label)
         self.tabs_manager.cursor_pos_change.connect(
-            lambda pos:  cur_pos_label.setText(f'{pos[0]}:{pos[1]}')
+            lambda pos: cur_pos_label.setText(f'{pos[0]}:{pos[1]}')
         )
 
     def add_welcome_page(self):
@@ -110,6 +128,23 @@ class MainWindow(QMainWindow):
                 QMessageBox.information(self, 'Error', 'Invalid file', QMessageBox.Ok)
         else:
             self.add_welcome_page()
+
+    @Slot()
+    def add_editor_with_check(self, filepath) -> bool:
+        """
+        add editor tab if the file is not on tabs list
+        :param filepath: filepath to open
+        :return: if new editor added
+        """
+        for tab in self.tabs_manager.all_widgets:
+            if not isinstance(tab, CodeEditorWidget):
+                continue
+            if tab.filepath == filepath:
+                return False
+        self.tabs_manager.add_editor_tab(
+            t := CodeEditorWidget(parent=self, filepath=filepath),
+            t.windowTitle())
+        return True
 
     def closeEvent(self, event: QCloseEvent) -> None:
         # when close application with tabs at 'need_saving' status, will prompt

@@ -6,6 +6,7 @@ from ..ui.ui_codeeditor import Ui_CodeEditor
 
 
 class CodeEditorWidget(QWidget):
+    # TODO: Add a path bar like vscode
     content_status_changed = Signal(bool)  # self._need_saving
 
     _new_file_count = 0
@@ -39,6 +40,7 @@ class CodeEditorWidget(QWidget):
         assert os.path.exists(self._filepath)
 
         with open(self._filepath, 'r') as f:
+            # TODO: handle encoding
             content = f.read()
             self.editingArea.setPlainText(content)
 

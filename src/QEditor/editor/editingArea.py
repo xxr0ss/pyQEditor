@@ -28,7 +28,6 @@ class LineNumberArea(QWidget):
 
 # TODO add Editor Info Area, for example: cursor position, encoding, tab length, LF/CRLF
 
-
 class EditingArea(QPlainTextEdit):
     __title__ = 'Editor'
 
