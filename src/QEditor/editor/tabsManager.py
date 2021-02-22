@@ -12,6 +12,7 @@ class TabsManager(QObject):
     side_enum = [QTabBar.ButtonPosition.LeftSide, QTabBar.ButtonPosition.RightSide]
 
     tabs_empty = Signal()
+    cursor_pos_change = Signal(tuple)
 
     def __init__(self, parent: QMainWindow):
         super(TabsManager, self).__init__()
@@ -49,10 +50,13 @@ class TabsManager(QObject):
         if isinstance(widget, CodeEditorWidget):
             # mark tab as modified when content of editor changed
             widget.content_status_changed.connect(
-                lambda need_saving: self.update_tab_status(widget, need_saving))
+                lambda need_saving: self.update_tab_content_status(widget, need_saving))
+            widget.editingArea.cursorPositionChanged.connect(
+                lambda: self.cursor_pos_change.emit(widget.get_cursor_pos())
+            )
 
         idx = self._tabs.addTab(widget, title)
-        # self.parent.setWindowTitle(title)
+        self.parent.setWindowTitle(title)
         self._tabs.setCurrentIndex(idx)
 
         # use customized Close Button
@@ -92,7 +96,7 @@ class TabsManager(QObject):
         return True
 
     @Slot()
-    def update_tab_status(self, w: CodeEditorWidget, need_saving: bool):
+    def update_tab_content_status(self, w: CodeEditorWidget, need_saving: bool):
         idx = self._tabs.indexOf(w)
         text = self._tabs.tabText(idx)
         if need_saving:

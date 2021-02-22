@@ -1,5 +1,5 @@
 from PySide6.QtCore import Qt, Signal, Slot, QCoreApplication, qDebug  # for enum flags
-from PySide6.QtWidgets import QMainWindow, QFileDialog, QMessageBox, QWidget
+from PySide6.QtWidgets import QMainWindow, QFileDialog, QMessageBox,QLabel, QWidget
 from PySide6.QtGui import QCloseEvent
 from .editor.codeEditorWidget import CodeEditorWidget
 from .welcomePage import WelcomePage
@@ -22,6 +22,7 @@ class MainWindow(QMainWindow):
         self.tabs_manager = TabsManager(parent=self)
         # TODO 自定义Tab的分离逻辑
         self.init_tabs_widget()
+        self.init_status_bar()
 
         self.check_cmd_args()
 
@@ -80,12 +81,20 @@ class MainWindow(QMainWindow):
 
     def init_tabs_widget(self):
         self.setCentralWidget(self.tabs_manager.tabs)
-        tab_widget = self.tabs_manager.tabs
 
         self.external_file.connect(
             lambda filepath: self.tabs_manager.add_editor_tab(
                 t := CodeEditorWidget(parent=self, filepath=filepath),
                 t.windowTitle()))
+
+    def init_status_bar(self):
+        status_bar = self.statusBar()
+        cur_pos_label = QLabel()
+        cur_pos_label.setText('0, 0')
+        status_bar.addPermanentWidget(cur_pos_label)
+        self.tabs_manager.cursor_pos_change.connect(
+            lambda pos:  cur_pos_label.setText(f'{pos[0]}:{pos[1]}')
+        )
 
     def add_welcome_page(self):
         page = WelcomePage(self)
