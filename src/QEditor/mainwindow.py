@@ -1,5 +1,5 @@
 from PySide6.QtCore import Qt, Signal, Slot, QCoreApplication, qDebug  # for enum flags
-from PySide6.QtWidgets import QMainWindow, QFileDialog, QDockWidget, QMessageBox
+from PySide6.QtWidgets import QMainWindow, QFileDialog, QMessageBox, QWidget
 from PySide6.QtGui import QCloseEvent
 from .editor.codeEditorWidget import CodeEditorWidget
 from .welcomePage import WelcomePage
@@ -20,15 +20,14 @@ class MainWindow(QMainWindow):
         self.setWindowTitle('No File')
 
         self.tabs_manager = TabsManager(parent=self)
-        # TODO 取消QDockWidget的实现，自定义Tab的分离逻辑
-        self.editor_tabs_dock = self.add_dock_tab_manager(self.tabs_manager)
+        # TODO 自定义Tab的分离逻辑
+        self.init_tabs_widget()
 
         self.check_cmd_args()
 
     @Slot()
     def on_actionNew_triggered(self):
-        self.make_sure_tabs_dock_visible()
-        new_editor = CodeEditorWidget(parent=self.editor_tabs_dock, filepath=None)
+        new_editor = CodeEditorWidget(parent=self, filepath=None)
         self.tabs_manager.add_editor_tab(new_editor, new_editor.windowTitle())
 
     @Slot()
@@ -46,8 +45,7 @@ class MainWindow(QMainWindow):
                 if page.filepath == filename[0]:
                     return
 
-        self.make_sure_tabs_dock_visible()
-        ce = CodeEditorWidget(self.editor_tabs_dock, filename[0])
+        ce = CodeEditorWidget(self, filename[0])
         self.tabs_manager.add_editor_tab(ce, ce.windowTitle())
 
     @Slot()
@@ -56,10 +54,6 @@ class MainWindow(QMainWindow):
         tab = tabs.currentWidget()
         self.save_editor_tab(tab)
         tabs.setTabText(tabs.currentIndex(), tab.get_file_base_name())
-
-    @Slot()
-    def close_editor_tabs(self, dock_tabs: QDockWidget):
-        dock_tabs.close()
 
     def save_editor_tab(self, tab):
         """
@@ -84,25 +78,14 @@ class MainWindow(QMainWindow):
         tab.filepath = filepath
         tab.need_saving = False
 
-    def make_sure_tabs_dock_visible(self):
-        if self.editor_tabs_dock.isHidden():
-            self.editor_tabs_dock.show()
+    def init_tabs_widget(self):
+        self.setCentralWidget(self.tabs_manager.tabs)
+        tab_widget = self.tabs_manager.tabs
 
-    def add_dock_tab_manager(self, tabs_mgr: TabsManager) -> QDockWidget:
-        dock = QDockWidget('', self)
-        dock.setWidget(tabs_mgr.tabs)
-        dock.resize(self.size())
-
-        self.addDockWidget(Qt.TopDockWidgetArea, dock)
-
-        tabs_mgr.tabs_empty.connect(lambda: self.close_editor_tabs(dock))
         self.external_file.connect(
-            lambda filepath: tabs_mgr.add_editor_tab(
-                t := CodeEditorWidget(parent=dock, filepath=filepath),
+            lambda filepath: self.tabs_manager.add_editor_tab(
+                t := CodeEditorWidget(parent=self, filepath=filepath),
                 t.windowTitle()))
-        # the lambda above: python pass these args from left to right so it is okay
-
-        return dock
 
     def add_welcome_page(self):
         page = WelcomePage(self)

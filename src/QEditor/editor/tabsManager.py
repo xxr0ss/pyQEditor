@@ -23,10 +23,23 @@ class TabsManager(QObject):
         self._tabs.tabCloseRequested.connect(self.remove_editor_tab)
         # make tabs movable (their order can be changed)
         self._tabs.setMovable(True)
+        self.tabs_empty.connect(lambda: CodeEditorWidget.reset_new_file_count())
 
     @property
     def tabs(self):
         return self._tabs
+
+    def _q_closeTab(self):
+        btn: CloseButton = self.sender()
+        tab_bar: QTabBar = self.tabs.tabBar()
+        tab_to_close = -1
+        close_side = self.side_enum[tab_bar.style().styleHint(QStyle.SH_TabBar_CloseButtonPosition, None, tab_bar)]
+        for i in range(tab_bar.count()):
+            if tab_bar.tabButton(i, close_side) == btn:
+                tab_to_close = i
+                break
+        if tab_to_close != -1:
+            self._tabs.tabCloseRequested.emit(tab_to_close)
 
     def add_editor_tab(self, widget: QWidget, title: str):
         # automatically remove welcome page by default when opened new tab
@@ -46,7 +59,7 @@ class TabsManager(QObject):
         close_side = self.side_enum[widget.style().styleHint(
             QStyle.SH_TabBar_CloseButtonPosition, None, widget)]
         self._tabs.tabBar().setTabButton(idx, close_side, btn := CloseButton(self._tabs.tabBar()))
-        btn.clicked.connect(lambda: self._tabs.tabCloseRequested.emit(idx))
+        btn.clicked.connect(self._q_closeTab)
 
         if isinstance(widget, CodeEditorWidget):
             widget.editingArea.setFocus()
@@ -55,6 +68,7 @@ class TabsManager(QObject):
     def remove_editor_tab(self, index):
         # TODO 重构成根据tab进行选择，拆成两个/多个函数，以像vsc那样适应多种页面
         # return False if canceled
+        print(index)
         tab = self._tabs.widget(index)
         if isinstance(tab, CodeEditorWidget):
             if tab.need_saving:
@@ -116,6 +130,7 @@ class CloseButton(QAbstractButton):
     can customize the paint process of a close button, so that
     we can easily use icons and so on.
     """
+
     def __init__(self, parent: QWidget):
         super(CloseButton, self).__init__(parent)
         self.parent = parent
