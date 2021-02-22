@@ -10,9 +10,13 @@ class CodeEditorWidget(QWidget):
 
     _new_file_count = 0
 
+    @classmethod
+    def reset_new_file_count(cls):
+        cls._new_file_count = 0
+
     def __init__(self, parent=None, filepath=None):
         super(CodeEditorWidget, self).__init__()
-        self.parent = parent
+        self.parent = parent    # for sizeHint only
         self.ui = Ui_CodeEditor()
         self.ui.setupUi(self)
         self.setLayout(self.ui.editorVLayout)
