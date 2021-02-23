@@ -6,6 +6,7 @@ from ..ui.ui_codeeditor import Ui_CodeEditor
 
 
 class CodeEditorWidget(QWidget):
+    # TODO: Add a path bar like vscode
     content_status_changed = Signal(bool)  # self._need_saving
 
     _new_file_count = 0
@@ -21,8 +22,6 @@ class CodeEditorWidget(QWidget):
         self.ui.setupUi(self)
         self.setLayout(self.ui.editorVLayout)
         self._editingArea: QPlainTextEdit = self.ui.codeEditingArea
-        self.statusBar = self.ui.statusBar
-        self.editingArea.cursorPositionChanged.connect(self.update_statusbar_cursor_pos)
 
         self._need_saving = False
         self.editingArea.textChanged.connect(lambda: self.content_status_changed.emit(True))
@@ -41,6 +40,7 @@ class CodeEditorWidget(QWidget):
         assert os.path.exists(self._filepath)
 
         with open(self._filepath, 'r') as f:
+            # TODO: handle encoding
             content = f.read()
             self.editingArea.setPlainText(content)
 
@@ -101,11 +101,10 @@ class CodeEditorWidget(QWidget):
     def is_new_file(self) -> bool:
         return self._filepath is None
 
-    @Slot()
-    def update_statusbar_cursor_pos(self):
+    def get_cursor_pos(self):
         cursor = self.editingArea.textCursor()
         row, col = cursor.blockNumber() + 1, cursor.columnNumber() + 1
-        self.statusBar.updateCursorPos((row, col))
+        return row, col
 
     @Slot()
     def content_status_change(self, need_saving: bool):

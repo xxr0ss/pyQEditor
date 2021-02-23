@@ -27,8 +27,11 @@
     <property name="title">
      <string>&amp;File</string>
     </property>
-    <addaction name="actionNew"/>
-    <addaction name="actionOpen"/>
+    <addaction name="actionNew_File"/>
+    <addaction name="separator"/>
+    <addaction name="actionOpen_File"/>
+    <addaction name="actionOpen_Folder"/>
+    <addaction name="separator"/>
     <addaction name="actionSave"/>
    </widget>
    <widget class="QMenu" name="menuEdit">
@@ -40,9 +43,9 @@
    <addaction name="menuEdit"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
-  <action name="actionOpen">
+  <action name="actionOpen_File">
    <property name="text">
-    <string>Open</string>
+    <string>Open File..</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+O</string>
@@ -56,12 +59,20 @@
     <string>Ctrl+S</string>
    </property>
   </action>
-  <action name="actionNew">
+  <action name="actionNew_File">
    <property name="text">
-    <string>New</string>
+    <string>New File</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+N</string>
+   </property>
+  </action>
+  <action name="actionOpen_Folder">
+   <property name="text">
+    <string>Open Folder..</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+K, Ctrl+N</string>
    </property>
   </action>
  </widget>

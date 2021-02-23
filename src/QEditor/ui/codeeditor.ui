@@ -42,9 +42,6 @@
       </property>
      </widget>
     </item>
-    <item>
-     <widget class="EditorStatusBar" name="statusBar" native="true"/>
-    </item>
    </layout>
   </widget>
  </widget>
@@ -53,12 +50,6 @@
    <class>EditingArea</class>
    <extends>QPlainTextEdit</extends>
    <header>..editor.editingArea</header>
-  </customwidget>
-  <customwidget>
-   <class>EditorStatusBar</class>
-   <extends>QWidget</extends>
-   <header>..editor.editorStatusBar</header>
-   <container>1</container>
   </customwidget>
  </customwidgets>
  <resources/>

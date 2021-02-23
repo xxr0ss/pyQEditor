@@ -12,18 +12,23 @@ class TabsManager(QObject):
     side_enum = [QTabBar.ButtonPosition.LeftSide, QTabBar.ButtonPosition.RightSide]
 
     tabs_empty = Signal()
+    cursor_pos_change = Signal(tuple)
 
     def __init__(self, parent: QMainWindow):
         super(TabsManager, self).__init__()
         self.parent = parent  # MainWindow
         self._tabs = QTabWidget()
+        self._init_tab_widget()
+
+        self.tabs_empty.connect(lambda: CodeEditorWidget.reset_new_file_count())
+
+    def _init_tab_widget(self):
         self._tabs.setTabPosition(QTabWidget.North)
         # so that there will be a 'X' on tab for closing
         self._tabs.setTabsClosable(True)
         self._tabs.tabCloseRequested.connect(self.remove_editor_tab)
         # make tabs movable (their order can be changed)
         self._tabs.setMovable(True)
-        self.tabs_empty.connect(lambda: CodeEditorWidget.reset_new_file_count())
 
     @property
     def tabs(self):
@@ -41,7 +46,7 @@ class TabsManager(QObject):
         if tab_to_close != -1:
             self._tabs.tabCloseRequested.emit(tab_to_close)
 
-    def add_editor_tab(self, widget: QWidget, title: str):
+    def add_editor_tab(self, widget: QWidget, title: str = ''):
         # automatically remove welcome page by default when opened new tab
         if self._tabs.count() == 1:
             if isinstance(self._tabs.widget(0), WelcomePage):
@@ -49,10 +54,12 @@ class TabsManager(QObject):
         if isinstance(widget, CodeEditorWidget):
             # mark tab as modified when content of editor changed
             widget.content_status_changed.connect(
-                lambda need_saving: self.update_tab_status(widget, need_saving))
+                lambda need_saving: self.update_tab_content_status(widget, need_saving))
+            widget.editingArea.cursorPositionChanged.connect(
+                lambda: self.cursor_pos_change.emit(widget.get_cursor_pos())
+            )
 
         idx = self._tabs.addTab(widget, title)
-        # self.parent.setWindowTitle(title)
         self._tabs.setCurrentIndex(idx)
 
         # use customized Close Button
@@ -92,7 +99,7 @@ class TabsManager(QObject):
         return True
 
     @Slot()
-    def update_tab_status(self, w: CodeEditorWidget, need_saving: bool):
+    def update_tab_content_status(self, w: CodeEditorWidget, need_saving: bool):
         idx = self._tabs.indexOf(w)
         text = self._tabs.tabText(idx)
         if need_saving:
@@ -200,7 +207,7 @@ class CloseButton(QAbstractButton):
     def tabBar_close_button_icon() -> QIcon:
         icon = QIcon()
         # add
-        icon.addPixmap(QPixmap(':/default/icons/ui/closeButton.png'), QIcon.Normal, QIcon.Off)
-        icon.addPixmap(QPixmap(':/default/icons/ui/closeButton_down.png'), QIcon.Normal, QIcon.On)
-        icon.addPixmap(QPixmap(':/default/icons/ui/closeButton_hover.png'), QIcon.Active, QIcon.Off)
+        icon.addPixmap(QPixmap(':/default/ui/icons/closeButton.png'), QIcon.Normal, QIcon.Off)
+        icon.addPixmap(QPixmap(':/default/ui/icons/closeButton_down.png'), QIcon.Normal, QIcon.On)
+        icon.addPixmap(QPixmap(':/default/ui/icons/closeButton_hover.png'), QIcon.Active, QIcon.Off)
         return icon

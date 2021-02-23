@@ -5,9 +5,10 @@
 #
 
 import os
-from PySide6.QtCore import Slot, Qt, QRect, QSize
+from PySide6.QtCore import Slot, Qt, QRect, QSize, QFile, QIODevice, QTextStream
 from PySide6.QtGui import QColor, QPainter, QTextFormat, QPaintEvent, QResizeEvent
 from PySide6.QtWidgets import QPlainTextEdit, QWidget, QTextEdit
+from ..rc_styles import *
 
 
 class LineNumberArea(QWidget):
@@ -28,7 +29,6 @@ class LineNumberArea(QWidget):
 
 # TODO add Editor Info Area, for example: cursor position, encoding, tab length, LF/CRLF
 
-
 class EditingArea(QPlainTextEdit):
     __title__ = 'Editor'
 
@@ -44,8 +44,11 @@ class EditingArea(QPlainTextEdit):
         self.cursorPositionChanged.connect(self.highlight_current_line)
     
     def setupStyle(self):
-        with open(os.sep.join((os.getcwd(), 'QEditor/ui/stylesheet.qss')), 'r') as f:
-            self.setStyleSheet(f.read())
+        file = QFile(':/default/ui/stylesheet.qss')
+        file.open(QIODevice.ReadOnly | QIODevice.Text)
+        ts = QTextStream(file)
+        self.setStyleSheet(ts.readAll())
+        file.close()
 
     def line_number_area_width(self):
         max_num = max(1, self.blockCount())
