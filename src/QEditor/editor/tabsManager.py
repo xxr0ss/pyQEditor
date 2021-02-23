@@ -207,7 +207,7 @@ class CloseButton(QAbstractButton):
     def tabBar_close_button_icon() -> QIcon:
         icon = QIcon()
         # add
-        icon.addPixmap(QPixmap(':/default/icons/ui/icons/closeButton.png'), QIcon.Normal, QIcon.Off)
-        icon.addPixmap(QPixmap(':/default/icons/ui/icons/closeButton_down.png'), QIcon.Normal, QIcon.On)
-        icon.addPixmap(QPixmap(':/default/icons/ui/icons/closeButton_hover.png'), QIcon.Active, QIcon.Off)
+        icon.addPixmap(QPixmap(':/default/ui/icons/closeButton.png'), QIcon.Normal, QIcon.Off)
+        icon.addPixmap(QPixmap(':/default/ui/icons/closeButton_down.png'), QIcon.Normal, QIcon.On)
+        icon.addPixmap(QPixmap(':/default/ui/icons/closeButton_hover.png'), QIcon.Active, QIcon.Off)
         return icon

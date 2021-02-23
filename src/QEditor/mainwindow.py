@@ -130,7 +130,6 @@ class MainWindow(QMainWindow):
         argv = QCoreApplication.arguments()
         if len(argv) > 1:
             if os.path.exists(argv[1]):
-                qDebug(b'opening file from command line (could be file drop on executable)')
                 self.external_file.emit(argv[1])
             else:
                 QMessageBox.information(self, 'Error', 'Invalid file', QMessageBox.Ok)

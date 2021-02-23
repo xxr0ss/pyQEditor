@@ -1,5 +1,5 @@
 <RCC>
-    <qresource prefix="/default/icons">
+    <qresource prefix="/default">
         <file>ui/icons/closeButton.png</file>
         <file>ui/icons/closeButton_hover.png</file>
         <file>ui/icons/closeButton_down.png</file>
