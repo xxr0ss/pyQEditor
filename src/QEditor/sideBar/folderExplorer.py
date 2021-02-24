@@ -13,7 +13,7 @@ class FolderExplorer(QWidget):
     def __init__(self, parent):
         super(FolderExplorer, self).__init__()
         self.parent = parent
-        self.folder_opened = False
+        self._folder_dir_path = ''
         self._tree_view: QTreeView = None
         self.folder_model = None
         self.layout = QVBoxLayout(self)
@@ -21,11 +21,21 @@ class FolderExplorer(QWidget):
         self.layout.setContentsMargins(0, 0, 0, 0)
         self.setLayout(self.layout)
 
-    def open_folder(self, dir_name: str):
-        self.init_folder_tree_view(dir_name)
+    @property
+    def folder_dir_path(self):
+        return self._folder_dir_path
 
-    def init_folder_tree_view(self, dir_name):
+    def open_folder(self, dir_name: str) -> bool:
+        if self._folder_dir_path != '':
+            # already have folder opened
+            return False
+        self._init_folder_tree_view(dir_name)
+        return True
+
+    def _init_folder_tree_view(self, dir_name):
         print('opened directory: ', dir_name)
+        self._folder_dir_path = dir_name    # set associated dir path
+
         self.folder_model = QFileSystemModel()
         self._tree_view = FolderTreeView(self)
         self._tree_view.setModel(self.folder_model)
@@ -37,7 +47,6 @@ class FolderExplorer(QWidget):
         self._tree_view.hideColumn(3)
 
         self._tree_view.setHeaderHidden(True)
-        self._tree_view.file_clicked.connect(lambda filepath: self.file_clicked.emit(filepath))
 
         self.layout.addWidget(self._tree_view)
 
@@ -45,10 +54,12 @@ class FolderExplorer(QWidget):
     def folder_tree_view(self):
         return self._tree_view
 
+    def enterEvent(self, event: QMouseEvent) -> None:
+        event.accept()
+        print('Entered folder explorer')
+
 
 class FolderTreeView(QTreeView):
-    file_clicked = Signal(str)
-
     def __init__(self, parent):
         super(FolderTreeView, self).__init__()
         self.parent = parent
@@ -65,7 +76,7 @@ class FolderTreeView(QTreeView):
         print(f"'{filepath}' clicked")
 
         if os.path.isfile(filepath):
-            self.file_clicked.emit(filepath)
+            self.parent.file_clicked.emit(filepath)
         elif os.path.isdir(filepath):
             # check isExpanded twice because clicking the '>' left to item
             # will affect whether collapse or expand.

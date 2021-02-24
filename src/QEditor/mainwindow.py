@@ -4,8 +4,7 @@ from PySide6.QtGui import QCloseEvent
 from .editor.codeEditorWidget import CodeEditorWidget
 from .welcomePage import WelcomePage
 from .editor.tabsManager import TabsManager
-from .explorer.folderExplorer import FolderExplorer
-from .explorer.explorersManager import ExplorersManager
+from .sideBar import SideBar, FolderExplorer
 import os
 
 from .ui.ui_mainwindow import Ui_mainWindow
@@ -13,7 +12,8 @@ from .ui.ui_mainwindow import Ui_mainWindow
 
 class MainWindow(QMainWindow):
     # Signals
-    external_file = Signal(str)
+    external_file = Signal(str)     # arg from commandline
+    external_dir = Signal(str)      # arg from commandline
 
     def __init__(self):
         super().__init__()
@@ -21,18 +21,23 @@ class MainWindow(QMainWindow):
         self.ui.setupUi(self)
         self.setWindowTitle('No File')
 
-        self.tabs_manager = TabsManager(parent=self)
-        self.explorers_manager = ExplorersManager(window=self)
+        self.tabs_manager = TabsManager(self)
 
-        self.main_splitter = QSplitter()
+        self.side_bar: SideBar = None
+        self.init_side_bar()
+        self.folder_explorer = self.side_bar.folder_explorer
+        self.folder_explorer.file_clicked.connect(self.open_file_in_tabs)
 
         self.init_tabs_widget()
         self.init_status_bar()
 
+        self.main_splitter = self.init_main_splitter()
+        self.setCentralWidget(self.main_splitter)
         self.check_cmd_args()
 
     @Slot()
     def on_actionNew_File_triggered(self):
+        # TODO 这样访问会不会太直接？要不要把创建CodeEditorWidget封装在tabs_manager?
         new_editor = CodeEditorWidget(parent=self, filepath=None)
         self.tabs_manager.add_editor_tab(new_editor, new_editor.windowTitle())
 
@@ -40,7 +45,6 @@ class MainWindow(QMainWindow):
     def on_actionOpen_File_triggered(self):
         filename = QFileDialog.getOpenFileName(self, 'Open File')
         tabs = self.tabs_manager.tabs
-
         if filename[0] == '':
             return
 
@@ -60,14 +64,9 @@ class MainWindow(QMainWindow):
         if opened_dir == '':
             return
 
-        folder_exp: FolderExplorer = self.explorers_manager.folder_explorer
-        folder_exp.open_folder(opened_dir)
-        folder_exp.file_clicked.connect(lambda filepath: self.external_file.emit(filepath))
-        splitter = self.main_splitter
-        splitter.addWidget(folder_exp)
-        splitter.addWidget(self.tabs_manager.tabs)
-        splitter.setCollapsible(0, True)
-        self.setCentralWidget(splitter)
+        folder = self.folder_explorer
+        folder.open_folder(opened_dir)
+        folder.show()
 
     @Slot()
     def on_actionSave_triggered(self):
@@ -108,6 +107,16 @@ class MainWindow(QMainWindow):
             if current_tab is not None:
                 self.setWindowTitle(self.tabs_manager.tabs.tabText(index))
 
+    @Slot()
+    def open_file_in_tabs(self, filename):
+        self.tabs_manager.add_editor_tab(
+            ce := CodeEditorWidget(self, filename),
+            ce.windowTitle())
+
+    def init_side_bar(self):
+        self.side_bar = SideBar(self)
+        self.addToolBar(Qt.LeftToolBarArea, self.side_bar)
+
     def init_tabs_widget(self):
         self.setCentralWidget(self.tabs_manager.tabs)
         self.external_file.connect(self.add_editor_with_check)
@@ -122,19 +131,38 @@ class MainWindow(QMainWindow):
             lambda pos: cur_pos_label.setText(f'{pos[0]}:{pos[1]}')
         )
 
-    def add_welcome_page(self):
+    def init_main_splitter(self):
+        assert self.side_bar is not None
+
+        splitter = QSplitter(self)
+        splitter.addWidget(self.side_bar.widget_current)
+        splitter.addWidget(self.tabs_manager.tabs)
+        splitter.setCollapsible(0, True)
+        splitter.setCollapsible(1, False)
+        self.folder_explorer.setVisible(False)
+
+        return splitter
+
+    def brand_new_startup(self):
+        # opened this application with out specifying target dir or something
         page = WelcomePage(self)
         self.tabs_manager.add_editor_tab(page, 'Welcome')
 
     def check_cmd_args(self):
         argv = QCoreApplication.arguments()
         if len(argv) > 1:
-            if os.path.exists(argv[1]):
-                self.external_file.emit(argv[1])
+            if os.path.exists(path := argv[1]):
+                if os.path.isfile(path):
+                    self.external_file.emit(path)
+                elif os.path.isdir(path):
+                    self.external_dir.emit(path)
+                else:
+                    # TODO: what could here be?
+                    pass
             else:
-                QMessageBox.information(self, 'Error', 'Invalid file', QMessageBox.Ok)
+                QMessageBox.information(self, 'Error', 'Invalid commandline arguments', QMessageBox.Ok)
         else:
-            self.add_welcome_page()
+            self.brand_new_startup()
 
     @Slot()
     def add_editor_with_check(self, filepath) -> bool:
