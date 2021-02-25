@@ -38,11 +38,14 @@ class CodeEditorWidget(QWidget):
         assert self._filepath is not None
         # file's existence should be checked before calling this method
         assert os.path.exists(self._filepath)
-
+        print(self.need_saving)
         with open(self._filepath, 'r') as f:
             # TODO: handle encoding
             content = f.read()
             self.editingArea.setPlainText(content)
+            # setPlainText() triggers: textChanged -> content_status_changed(True)
+            # so we manually set need_saving "False" in the initial
+            self.need_saving = False
 
         # keep file path '/'-style in CodeEditor
         # because both Windows and Linux are happy to use it

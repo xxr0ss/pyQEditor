@@ -3,5 +3,6 @@
         <file>ui/icons/closeButton.png</file>
         <file>ui/icons/closeButton_hover.png</file>
         <file>ui/icons/closeButton_down.png</file>
+        <file>ui/icons/explorer.png</file>
     </qresource>
 </RCC>
