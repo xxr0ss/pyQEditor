@@ -1,2 +1,2 @@
-from .folderExplorer import FolderExplorer
+from .folderExplorer import FolderExplorer, FolderInit
 from .sideBar import SideBar

@@ -10,6 +10,7 @@ class FolderExplorer(QWidget):
     A explorer for file folder, use Qt's model/view
     """
     file_clicked = Signal(str)
+    ask_open_folder = Signal()
 
     def __init__(self, parent):
         print('folderExplorer init')
@@ -20,9 +21,9 @@ class FolderExplorer(QWidget):
         self.folder_model = None
         self.layout = QVBoxLayout(self)
         self.layout.setContentsMargins(0, 0, 0, 0)
-        self._init_view = FolderInit(self)
+        self._initial_view = FolderInit(self)
         self.stacked_widget = QStackedWidget(self)
-        self.stacked_widget.addWidget(self._init_view)
+        self.stacked_widget.addWidget(self._initial_view)
         self.layout.addWidget(self.stacked_widget)
         self.setLayout(self.layout)
         print('folderExplorer done init')
@@ -30,6 +31,10 @@ class FolderExplorer(QWidget):
     @property
     def folder_dir_path(self):
         return self._folder_dir_path
+
+    @property
+    def initial_view(self):
+        return self._initial_view
 
     def open_folder(self, opened_dir):
         self._folder_dir_path = opened_dir
@@ -104,4 +109,4 @@ class FolderInit(QWidget):
 
     @Slot()
     def open_folder(self):
-        pass
+        self.parent.ask_open_folder.emit()

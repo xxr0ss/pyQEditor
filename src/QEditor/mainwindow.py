@@ -4,7 +4,7 @@ from PySide6.QtGui import QCloseEvent
 from .editor.codeEditorWidget import CodeEditorWidget
 from .welcomePage import WelcomePage
 from .editor.tabsManager import TabsManager
-from .sideBar import SideBar, FolderExplorer
+from .sideBar import SideBar, FolderExplorer, FolderInit
 import os
 
 from .ui.ui_mainwindow import Ui_mainWindow
@@ -140,6 +140,8 @@ class MainWindow(QMainWindow):
         splitter.setCollapsible(0, True)
         splitter.setCollapsible(1, False)
         self.side_bar.tool_view.setVisible(False)
+
+        self.folder_explorer.ask_open_folder.connect(self.on_actionOpen_Folder_triggered)
 
         return splitter
 
