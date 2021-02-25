@@ -1,4 +1,4 @@
-from PySide6.QtCore import Qt, Signal, Slot, QCoreApplication, qDebug  # for enum flags
+from PySide6.QtCore import Qt, Signal, Slot, QCoreApplication
 from PySide6.QtWidgets import QMainWindow, QFileDialog, QMessageBox, QLabel, QSplitter
 from PySide6.QtGui import QCloseEvent
 from .editor.codeEditorWidget import CodeEditorWidget
@@ -135,11 +135,11 @@ class MainWindow(QMainWindow):
         assert self.side_bar is not None
 
         splitter = QSplitter(self)
-        splitter.addWidget(self.side_bar.widget_current)
+        splitter.addWidget(self.side_bar.tool_view)
         splitter.addWidget(self.tabs_manager.tabs)
         splitter.setCollapsible(0, True)
         splitter.setCollapsible(1, False)
-        self.folder_explorer.setVisible(False)
+        self.side_bar.tool_view.setVisible(False)
 
         return splitter
 
