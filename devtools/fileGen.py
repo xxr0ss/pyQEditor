@@ -54,7 +54,7 @@ def compile_qrc(filepath: str):
     if os.path.exists(filepath):
         file_dir_name = os.sep.join(filepath.split(os.sep)[:-1])
         fileBasenameNoExtension = filepath.split(os.sep)[-1].removesuffix('.qrc')
-        cmd = f'pyside6-rcc -o {file_dir_name}{os.sep}rc_{fileBasenameNoExtension}.py {filepath}'
+        cmd = f'pyside6-rcc -o {file_dir_name}{os.sep}{fileBasenameNoExtension}_rc.py {filepath}'
         # print(cmd)
         os.popen(cmd)
     else:

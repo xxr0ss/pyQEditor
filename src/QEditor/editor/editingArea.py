@@ -8,7 +8,7 @@ import os
 from PySide6.QtCore import Slot, Qt, QRect, QSize, QFile, QIODevice, QTextStream
 from PySide6.QtGui import QColor, QPainter, QTextFormat, QPaintEvent, QResizeEvent
 from PySide6.QtWidgets import QPlainTextEdit, QWidget, QTextEdit
-from ..rc_styles import *
+from ..styles_rc import *
 
 
 class LineNumberArea(QWidget):

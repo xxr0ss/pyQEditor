@@ -1,5 +1,5 @@
 __pycache__
 ui_*.py
-rc_*.py
+*_rc.py
 *.pyproject
 *.pyproject.user

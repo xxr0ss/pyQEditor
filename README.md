@@ -24,7 +24,7 @@ A Code Editor based on PySide6
 * Compile qrc files
     use `pyside6-rcc`
     ```bash
-    pyside6-rcc -o QEditor/rc_icons.py QEditor/icons.qrc
+    pyside6-rcc -o QEditor/icons_rc.py QEditor/icons.qrc
     ```
 
     or you can find devtools too in tools.py

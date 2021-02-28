@@ -4,7 +4,7 @@ from PySide6.QtWidgets import QAbstractButton, QStyle, QStyleOption, QTabBar, QW
     QTabWidget, QMessageBox, QMainWindow
 from ..welcomePage import WelcomePage
 from ..editor.codeEditorWidget import CodeEditorWidget
-from ..rc_icons import *
+from ..icons_rc import *
 
 
 class TabsManager(QObject):

@@ -2,7 +2,7 @@ from PySide6.QtWidgets import QWidget, QToolBar, QStackedWidget, QVBoxLayout, QS
 from PySide6.QtGui import QAction, QIcon, QPixmap
 from PySide6.QtCore import Signal, Slot
 from .folderExplorer import FolderExplorer
-from ..rc_icons import *
+from ..icons_rc import *
 
 
 class SideBar(QToolBar):

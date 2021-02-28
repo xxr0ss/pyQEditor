@@ -10,7 +10,7 @@ def removeAllUicFiles():
 
 def removeAllRcFiles():
     files_dir = os.sep.join((os.getcwd(), 'src', 'QEditor'))
-    checker = lambda f: f.startswith('rc_') and f.endswith('.py')
+    checker = lambda f: f.endswith('_rc.py')
     removeFiles([files_dir], checker)
 
 
