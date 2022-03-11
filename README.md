@@ -2,6 +2,8 @@
 
 A Code Editor based on PySide6
 
+![image](README.assets/image.png)
+
 ## Build
 ### Requirements
 * Python3.9+
